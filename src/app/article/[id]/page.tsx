@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { getDateString } from '../../_utils/getDateString';
 import classes from '../../_styles/Article.module.css';
 import DOMPurify from 'isomorphic-dompurify';
-import type { Post } from '../../_types/Post';
+import type { MicroCmsPost } from '../../_types/MicroCmsPost';
 import Image from 'next/image';
 
 interface Props {
@@ -14,20 +14,22 @@ interface Props {
 
 
 export default function Article(props: Props) {
-  const [post, setPost] = useState<Post | null>(null);
+  const [post, setPost] = useState<MicroCmsPost | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPost = async () => {
       try {
         const { id } = await props.params;
-        const res = await fetch(`https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/posts/${id}`, {
-          cache: 'no-store'
+        const res = await fetch(`https://4v36lonum5.microcms.io/api/v1/posts/${id}`, {
+          headers: {
+            'X-MICROCMS-API-KEY': process.env.NEXT_PUBLIC_MICROCMS_API_KEY,
+          }
         });
 
         if (res.ok) {
           const data = await res.json();
-          setPost(data.post);
+          setPost(data);
         } else {
           setPost(null);
         }
@@ -57,7 +59,7 @@ export default function Article(props: Props) {
             <Image
               height={500}
               width={800}
-              src={post.thumbnailUrl}
+              src={post.thumbnail.url}
               alt={`${post.title}の画像`}
               className={classes.img}
             />
@@ -66,7 +68,7 @@ export default function Article(props: Props) {
             <span className={classes.date}>{getDateString(post.createdAt)}</span>
             <div className={classes.tags}>
               {post.categories && post.categories.map((tag) => (
-                <span key={tag} className={classes.tag}>{tag}</span>
+                <span key={tag.id} className={classes.tag}>{tag.name}</span> 
               ))}
             </div>
           </div>
