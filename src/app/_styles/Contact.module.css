@@ -1,0 +1,120 @@
+.container {
+  min-height: 100vh;
+  background-color: #ffffff;
+  padding: 32px;
+}
+
+.form-wrapper {
+  max-width: 672px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 40px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.form-row-textarea {
+  align-items: flex-start;
+}
+
+.form-label {
+  width: 128px;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.form-row-textarea .form-label {
+  padding-top: 12px;
+}
+
+.form-input,
+.form-textarea {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.form-textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* エラー時のスタイル */
+.input-error {
+  border-color: #ef4444;
+}
+
+.input-error:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 14px;
+  margin-top: 8px;
+  margin-left: 160px;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 24px;
+}
+
+.btn {
+  padding: 10px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s;
+}
+
+.btn-submit {
+  background-color: #1f2937;
+  color: #ffffff;
+}
+
+.btn-submit:hover {
+  background-color: #374151;
+}
+
+.btn-clear {
+  background-color: #e5e7eb;
+  color: #1f2937;
+}
+
+.btn-clear:hover {
+  background-color: #d1d5db;
+}
