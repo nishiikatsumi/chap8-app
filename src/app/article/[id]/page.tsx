@@ -1,21 +1,26 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
 import { getDateString } from '../../_utils/getDateString';
 import classes from '../../_styles/Article.module.css';
 import DOMPurify from 'isomorphic-dompurify';
 import type { Post } from '../../_types/Post';
 import Image from 'next/image';
 
-export default function Article() {
-  const params = useParams();
-  const id = params.id as string;
+interface Props {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+
+export default function Article(props: Props) {
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPost = async () => {
       try {
+        const { id } = await props.params;
         const res = await fetch(`https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/posts/${id}`, {
           cache: 'no-store'
         });
@@ -34,7 +39,7 @@ export default function Article() {
     };
 
     fetchPost();
-  }, [id]);
+  }, [props.params]);
 
   if (loading) {
     return <div>読み込み中...</div>;
