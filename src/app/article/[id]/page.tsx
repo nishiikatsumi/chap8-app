@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { getDateString } from '../../_utils/getDateString';
 import classes from '../../_styles/Article.module.css';
 import DOMPurify from 'isomorphic-dompurify';
-import type { MicroCmsPost } from '../../_types/MicroCmsPost';
+import type { Post } from '../../_types/Types';
 import Image from 'next/image';
 
 interface Props {
@@ -14,17 +14,15 @@ interface Props {
 
 
 export default function Article(props: Props) {
-  const [post, setPost] = useState<MicroCmsPost | null>(null);
+  const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPost = async () => {
       try {
         const { id } = await props.params;
-        const res = await fetch(`https://4v36lonum5.microcms.io/api/v1/posts/${id}`, {
-          headers: {
-            'X-MICROCMS-API-KEY': process.env.NEXT_PUBLIC_MICROCMS_API_KEY,
-          }
+        const res = await fetch(`/app/posts/${id}`, {
+          cache: "no-cache"
         });
 
         if (res.ok) {
@@ -59,7 +57,7 @@ export default function Article(props: Props) {
             <Image
               height={500}
               width={800}
-              src={post.thumbnail.url}
+              src={post.thumbnailUrl}
               alt={`${post.title}の画像`}
               className={classes.img}
             />
@@ -67,8 +65,8 @@ export default function Article(props: Props) {
           <div className={classes.header}>
             <span className={classes.date}>{getDateString(post.createdAt)}</span>
             <div className={classes.tags}>
-              {post.categories && post.categories.map((tag) => (
-                <span key={tag.id} className={classes.tag}>{tag.name}</span> 
+              {post.postCategories && post.postCategories.map((tag) => (
+                <span key={tag.category.id} className={classes.tag}>{tag.category.name}</span> 
               ))}
             </div>
           </div>
