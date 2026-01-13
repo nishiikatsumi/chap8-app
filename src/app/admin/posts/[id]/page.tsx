@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminSidebar from "../../../_components/AdminSidebar";
 import classes from "../../../_styles/Admin.module.css";
 import type { Post, Category } from "../../../_types/Types";
 
@@ -136,36 +135,15 @@ export default function PostEditPage({ params }: Props) {
   };
 
   if (loading) {
-    return (
-      <>
-        <div className={classes.container}>
-          <AdminSidebar />
-          <main className={classes.mainContent}>
-            <div>読み込み中...</div>
-          </main>
-        </div>
-      </>
-    );
+    return <div>読み込み中...</div>;
   }
 
   if (!post) {
-    return (
-      <>
-        <div className={classes.container}>
-          <AdminSidebar />
-          <main className={classes.mainContent}>
-            <div>記事が見つかりませんでした</div>
-          </main>
-        </div>
-      </>
-    );
+    return <div>記事が見つかりませんでした</div>;
   }
 
   return (
     <>
-      <div className={classes.container}>
-        <AdminSidebar />
-        <main className={classes.mainContent}>
           <h1 className={classes.title}>記事編集</h1>
           <form onSubmit={handleUpdate} className={classes.form}>
             <div className={classes.formGroup}>
@@ -247,8 +225,6 @@ export default function PostEditPage({ params }: Props) {
               </button>
             </div>
           </form>
-        </main>
-      </div>
     </>
   );
 }

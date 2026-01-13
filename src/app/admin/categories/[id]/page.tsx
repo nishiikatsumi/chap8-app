@@ -1,8 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from "../../../_components/Header";
-import AdminSidebar from "../../../_components/AdminSidebar";
 import classes from "../../../_styles/Admin.module.css";
 
 interface Category {
@@ -104,37 +102,15 @@ export default function CategoryEditPage({ params }: Props) {
   };
 
   if (loading) {
-    return (
-      <>
-        <div className={classes.container}>
-          <AdminSidebar />
-          <main className={classes.mainContent}>
-            <div>読み込み中...</div>
-          </main>
-        </div>
-      </>
-    );
+    return <div>読み込み中...</div>;
   }
 
   if (!category) {
-    return (
-      <>
-        <Header />
-        <div className={classes.container}>
-          <AdminSidebar />
-          <main className={classes.mainContent}>
-            <div>カテゴリーが見つかりませんでした</div>
-          </main>
-        </div>
-      </>
-    );
+    return <div>カテゴリーが見つかりませんでした</div>;
   }
 
   return (
     <>
-      <div className={classes.container}>
-        <AdminSidebar />
-        <main className={classes.mainContent}>
           <h1 className={classes.title}>カテゴリー編集</h1>
           <form onSubmit={handleUpdate} className={classes.form}>
             <div className={classes.formGroup}>
@@ -169,8 +145,6 @@ export default function CategoryEditPage({ params }: Props) {
               </button>
             </div>
           </form>
-        </main>
-      </div>
     </>
   );
 }

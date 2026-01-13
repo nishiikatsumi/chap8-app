@@ -1,7 +1,6 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminSidebar from "../../../_components/AdminSidebar";
 import classes from "../../../_styles/Admin.module.css";
 
 export default function CategoryNewPage() {
@@ -38,10 +37,7 @@ export default function CategoryNewPage() {
 
   return (
     <>
-      <div className={classes.container}>
-        <AdminSidebar />
-        <main className={classes.mainContent}>
-          <h1 className={classes.title}>カテゴリー作成</h1>
+      <h1 className={classes.title}>カテゴリー作成</h1>
           <form onSubmit={handleSubmit} className={classes.form}>
             <div className={classes.formGroup}>
               <label htmlFor="name" className={classes.label}>
@@ -67,8 +63,6 @@ export default function CategoryNewPage() {
               </button>
             </div>
           </form>
-        </main>
-      </div>
     </>
   );
 }

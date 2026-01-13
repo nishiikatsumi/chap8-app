@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminSidebar from "../../../_components/AdminSidebar";
 import classes from "../../../_styles/Admin.module.css";
 
 interface Category {
@@ -87,23 +86,11 @@ export default function PostNewPage() {
   };
 
   if (loading) {
-    return (
-      <>
-        <div className={classes.container}>
-          <AdminSidebar />
-          <main className={classes.mainContent}>
-            <div>読み込み中...</div>
-          </main>
-        </div>
-      </>
-    );
+    return <div>読み込み中...</div>;
   }
 
   return (
     <>
-      <div className={classes.container}>
-        <AdminSidebar />
-        <main className={classes.mainContent}>
           <h1 className={classes.title}>記事作成</h1>
           <form onSubmit={handleSubmit} className={classes.form}>
             <div className={classes.formGroup}>
@@ -177,8 +164,6 @@ export default function PostNewPage() {
               </button>
             </div>
           </form>
-        </main>
-      </div>
     </>
   );
 }
