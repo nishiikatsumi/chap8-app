@@ -21,13 +21,13 @@ export default function Article(props: Props) {
     const fetchPost = async () => {
       try {
         const { id } = await props.params;
-        const res = await fetch(`/app/posts/${id}`, {
+        const res = await fetch(`/api/posts/${id}`, {
           cache: "no-cache"
         });
 
         if (res.ok) {
           const data = await res.json();
-          setPost(data);
+          setPost(data.post);
         } else {
           setPost(null);
         }

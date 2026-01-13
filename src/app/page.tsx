@@ -13,13 +13,13 @@ export default function Home() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const res = await fetch('/app/posts', {
+        const res = await fetch('/api/posts', {
           cache: "no-cache"
         });
 
         if (res.ok) {
           const data = await res.json();
-          setPosts(data.contents);
+          setPosts(data.posts);
         }
       } catch {
         setPosts([]);
