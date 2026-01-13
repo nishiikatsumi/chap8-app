@@ -1,5 +1,4 @@
 import Link from "next/link";
-import classes from "../../_styles/Admin.module.css";
 import { CategoriesIndexResponse } from "../../_types/PrismaTypes";
 import { getDateString } from "../../_utils/getDateString";
 
@@ -20,18 +19,18 @@ export default async function CategoriesPage() {
 
   return (
     <>
-      <div className={classes.header}>
-        <h1 className={classes.title}>カテゴリー一覧</h1>
-        <Link href="/admin/categories/new" className={classes.createButton}>
+      <div className="flex justify-between items-center mb-10">
+        <h1 className="text-3xl font-bold text-[#1f2328]">カテゴリー一覧</h1>
+        <Link href="/admin/categories/new" className="bg-blue-600 text-white px-6 py-3 border-0 rounded-md text-base font-semibold cursor-pointer no-underline inline-block transition-colors duration-200 hover:bg-blue-700">
           新規作成
         </Link>
       </div>
-      <ul className={classes.postList}>
+      <ul className="list-none p-0 m-0">
         {categories.map((category) => (
-          <li key={category.id} className={classes.postItem}>
-            <Link href={`/admin/categories/${category.id}`} className={classes.postLink}>
-              <h2 className={classes.postTitle}>{category.name}</h2>
-              <p className={classes.postDate}>
+          <li key={category.id} className="py-6 border-b border-gray-200 cursor-pointer transition-colors duration-200 hover:bg-gray-50">
+            <Link href={`/admin/categories/${category.id}`} className="no-underline text-inherit block">
+              <h2 className="text-xl font-semibold text-[#1f2328] mb-2">{category.name}</h2>
+              <p className="text-sm text-gray-500">
                 {getDateString(category.createdAt)}
               </p>
             </Link>

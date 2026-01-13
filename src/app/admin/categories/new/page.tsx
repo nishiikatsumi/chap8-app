@@ -1,7 +1,6 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import classes from "../../../_styles/Admin.module.css";
 
 export default function CategoryNewPage() {
   const router = useRouter();
@@ -37,10 +36,10 @@ export default function CategoryNewPage() {
 
   return (
     <>
-      <h1 className={classes.title}>カテゴリー作成</h1>
-          <form onSubmit={handleSubmit} className={classes.form}>
-            <div className={classes.formGroup}>
-              <label htmlFor="name" className={classes.label}>
+      <h1 className="text-3xl font-bold text-[#1f2328]">カテゴリー作成</h1>
+          <form onSubmit={handleSubmit} className="max-w-6xl">
+            <div className="mb-8">
+              <label htmlFor="name" className="block text-base font-semibold text-[#1f2328] mb-2">
                 カテゴリー名
               </label>
               <input
@@ -48,15 +47,15 @@ export default function CategoryNewPage() {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={classes.input}
+                className="w-full px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 focus:border-blue-600"
                 required
               />
             </div>
 
-            <div className={classes.buttonGroup}>
+            <div className="flex gap-4 mt-10">
               <button
                 type="submit"
-                className={classes.updateButton}
+                className="bg-purple-800 text-white px-8 py-3 border-0 rounded-md text-base font-semibold cursor-pointer transition-colors duration-200 hover:bg-purple-900 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 disabled={submitting}
               >
                 作成

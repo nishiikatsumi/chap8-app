@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { getDateString } from '../../_utils/getDateString';
-import classes from '../../_styles/Article.module.css';
 import DOMPurify from 'isomorphic-dompurify';
 import type { Post } from '../../_types/Types';
 import Image from 'next/image';
@@ -51,28 +50,28 @@ export default function Article(props: Props) {
 
   return (
     <div>
-      <main className={classes.main}>
-        <article key={post.id} className={classes.card}>
+      <main className="max-w-4xl mx-auto py-10 px-5">
+        <article key={post.id} className="bg-white border border-gray-200 px-8 py-6 mb-6">
           <div>
             <Image
               height={500}
               width={800}
               src={post.thumbnailUrl}
               alt={`${post.title}の画像`}
-              className={classes.img}
+              className="w-full h-auto rounded"
             />
           </div>
-          <div className={classes.header}>
-            <span className={classes.date}>{getDateString(post.createdAt)}</span>
-            <div className={classes.tags}>
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-sm text-gray-500">{getDateString(post.createdAt)}</span>
+            <div className="flex gap-2">
               {post.postCategories && post.postCategories.map((tag) => (
-                <span key={tag.category.id} className={classes.tag}>{tag.category.name}</span> 
+                <span key={tag.category.id} className="border border-blue-500 text-blue-500 px-3 py-1 rounded text-xs bg-transparent">{tag.category.name}</span>
               ))}
             </div>
           </div>
-          <h2 className={classes.title}>{post.title}</h2>
+          <h2 className="text-xl font-normal mb-4 text-gray-800">{post.title}</h2>
           <p
-            className={classes.content}
+            className="text-sm text-gray-600 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }}
           />
         </article>

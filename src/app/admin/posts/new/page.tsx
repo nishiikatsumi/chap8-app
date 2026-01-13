@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import classes from "../../../_styles/Admin.module.css";
 
 interface Category {
   id: number;
@@ -91,10 +90,10 @@ export default function PostNewPage() {
 
   return (
     <>
-          <h1 className={classes.title}>記事作成</h1>
-          <form onSubmit={handleSubmit} className={classes.form}>
-            <div className={classes.formGroup}>
-              <label htmlFor="title" className={classes.label}>
+          <h1 className="text-3xl font-bold text-[#1f2328]">記事作成</h1>
+          <form onSubmit={handleSubmit} className="max-w-6xl">
+            <div className="mb-8">
+              <label htmlFor="title" className="block text-base font-semibold text-[#1f2328] mb-2">
                 タイトル
               </label>
               <input
@@ -102,26 +101,26 @@ export default function PostNewPage() {
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className={classes.input}
+                className="w-full px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 focus:border-blue-600"
                 required
               />
             </div>
 
-            <div className={classes.formGroup}>
-              <label htmlFor="content" className={classes.label}>
+            <div className="mb-8">
+              <label htmlFor="content" className="block text-base font-semibold text-[#1f2328] mb-2">
                 内容
               </label>
               <textarea
                 id="content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className={classes.textarea}
+                className="w-full min-h-[200px] px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 resize-y font-inherit focus:border-blue-600"
                 required
               />
             </div>
 
-            <div className={classes.formGroup}>
-              <label htmlFor="thumbnailUrl" className={classes.label}>
+            <div className="mb-8">
+              <label htmlFor="thumbnailUrl" className="block text-base font-semibold text-[#1f2328] mb-2">
                 サムネイルURL
               </label>
               <input
@@ -129,13 +128,13 @@ export default function PostNewPage() {
                 id="thumbnailUrl"
                 value={thumbnailUrl}
                 onChange={(e) => setThumbnailUrl(e.target.value)}
-                className={classes.input}
+                className="w-full px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 focus:border-blue-600"
                 required
               />
             </div>
 
-            <div className={classes.formGroup}>
-              <label htmlFor="categories" className={classes.label}>
+            <div className="mb-8">
+              <label htmlFor="categories" className="block text-base font-semibold text-[#1f2328] mb-2">
                 カテゴリー
               </label>
               <select
@@ -143,7 +142,7 @@ export default function PostNewPage() {
                 multiple
                 value={selectedCategoryIds.map(String)}
                 onChange={handleCategoryChange}
-                className={classes.select}
+                className="w-full px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 bg-white cursor-pointer focus:border-blue-600"
                 size={5}
               >
                 {categories.map((category) => (
@@ -154,10 +153,10 @@ export default function PostNewPage() {
               </select>
             </div>
 
-            <div className={classes.buttonGroup}>
+            <div className="flex gap-4 mt-10">
               <button
                 type="submit"
-                className={classes.updateButton}
+                className="bg-purple-800 text-white px-8 py-3 border-0 rounded-md text-base font-semibold cursor-pointer transition-colors duration-200 hover:bg-purple-900 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 disabled={submitting}
               >
                 作成

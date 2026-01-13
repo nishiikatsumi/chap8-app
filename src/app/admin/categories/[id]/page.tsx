@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import classes from "../../../_styles/Admin.module.css";
 
 interface Category {
   id: number;
@@ -111,10 +110,10 @@ export default function CategoryEditPage({ params }: Props) {
 
   return (
     <>
-          <h1 className={classes.title}>カテゴリー編集</h1>
-          <form onSubmit={handleUpdate} className={classes.form}>
-            <div className={classes.formGroup}>
-              <label htmlFor="name" className={classes.label}>
+          <h1 className="text-3xl font-bold text-[#1f2328]">カテゴリー編集</h1>
+          <form onSubmit={handleUpdate} className="max-w-6xl">
+            <div className="mb-8">
+              <label htmlFor="name" className="block text-base font-semibold text-[#1f2328] mb-2">
                 カテゴリー名
               </label>
               <input
@@ -122,15 +121,15 @@ export default function CategoryEditPage({ params }: Props) {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={classes.input}
+                className="w-full px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 focus:border-blue-600"
                 required
               />
             </div>
 
-            <div className={classes.buttonGroup}>
+            <div className="flex gap-4 mt-10">
               <button
                 type="submit"
-                className={classes.updateButton}
+                className="bg-purple-800 text-white px-8 py-3 border-0 rounded-md text-base font-semibold cursor-pointer transition-colors duration-200 hover:bg-purple-900 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 disabled={submitting}
               >
                 更新
@@ -138,7 +137,7 @@ export default function CategoryEditPage({ params }: Props) {
               <button
                 type="button"
                 onClick={handleDelete}
-                className={classes.deleteButton}
+                className="bg-red-600 text-white px-8 py-3 border-0 rounded-md text-base font-semibold cursor-pointer transition-colors duration-200 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 disabled={submitting}
               >
                 削除
