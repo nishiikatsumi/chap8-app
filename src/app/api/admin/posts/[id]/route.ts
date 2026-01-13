@@ -6,6 +6,25 @@ export type Category = {
   name: string
 }
 
+export type PostWithCategories = {
+  id: number
+  title: string
+  content: string
+  thumbnailUrl: string
+  createdAt: Date
+  updatedAt: Date
+  postCategories: {
+    id: number
+    postId: number
+    categoryId: number
+    category: Category
+  }[]
+}
+
+export type GetPostResponse = {
+  post: PostWithCategories
+}
+
 export const GET = async (
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -38,7 +57,7 @@ export const GET = async (
       )
     }
 
-    return NextResponse.json({ post }, { status: 200 })
+    return NextResponse.json<GetPostResponse>({ post }, { status: 200 })
   } catch (error) {
     if (error instanceof Error)
       return NextResponse.json({ message: error.message }, { status: 400 })
