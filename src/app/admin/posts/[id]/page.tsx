@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import PostForm, { type PostFormData } from '@/app/_components/PostForm';
-import type { Post, Category } from "../../../_types/Types";
+import type { Post } from "../../../_types/Types";
 
 interface Props {
   params: Promise<{
@@ -13,7 +13,6 @@ interface Props {
 export default function PostEditPage({ params }: Props) {
   const router = useRouter();
   const [post, setPost] = useState<Post | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,23 +20,13 @@ export default function PostEditPage({ params }: Props) {
       try {
         const { id } = await params;
 
-        const [postRes, categoriesRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts/${id}`, {
-            cache: 'no-store',
-          }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories`, {
-            cache: 'no-store',
-          }),
-        ]);
+        const postRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts/${id}`, {
+          cache: 'no-store',
+        });
 
         if (postRes.ok) {
           const postData = await postRes.json();
           setPost(postData.post);
-        }
-
-        if (categoriesRes.ok) {
-          const categoriesData = await categoriesRes.json();
-          setCategories(categoriesData.categories);
         }
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -98,8 +87,7 @@ export default function PostEditPage({ params }: Props) {
           content: post.content,
           thumbnailUrl: post.thumbnailUrl,
           selectedCategoryIds: post.postCategories.map((pc) => pc.category.id),
-        }}  
-        categories={categories}
+        }}
         onSubmit={handleUpdate}
         onDelete={handleDelete}
         submitLabel="更新"

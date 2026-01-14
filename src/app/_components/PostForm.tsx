@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Category {
   id: number;
@@ -20,7 +20,6 @@ interface PostFormProps {
     thumbnailUrl: string;
     selectedCategoryIds: number[];
   };
-  categories: Category[];
   onSubmit: (data: PostFormData) => Promise<void>;
   onDelete?: () => Promise<void>;
   submitLabel: string;
@@ -33,18 +32,40 @@ export default function PostForm({
     thumbnailUrl: '',
     selectedCategoryIds: [],
   },
-  categories,
   onSubmit,
   onDelete,
   submitLabel,
 }: PostFormProps) {
   const [submitting, setSubmitting] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState(initialData.title);
   const [content, setContent] = useState(initialData.content);
   const [thumbnailUrl, setThumbnailUrl] = useState(initialData.thumbnailUrl);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>(
     initialData.selectedCategoryIds
   );
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories`, {
+          cache: 'no-store',
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data.categories);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,18 +99,21 @@ export default function PostForm({
     }
   };
 
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const options = e.target.options;
-    const selected: number[] = [];
-
-    for (let i = 0; i < options.length; i++) {
-      if (options[i].selected) {
-        selected.push(Number(options[i].value));
+  const handleCategoryToggle = (categoryId: number) => {
+    setSelectedCategoryIds((prev) => {
+      if (prev.includes(categoryId)) {
+        // すでに選択されている場合は削除
+        return prev.filter((id) => id !== categoryId);
+      } else {
+        // 選択されていない場合は追加
+        return [...prev, categoryId];
       }
-    }
-
-    setSelectedCategoryIds(selected);
+    });
   };
+
+  if (loading) {
+    return <div>読み込み中...</div>;
+  }
 
   return (
     <form onSubmit={handleSubmit} className="max-w-6xl">
@@ -138,24 +162,32 @@ export default function PostForm({
       </div>
 
       <div className="mb-8">
-        <label htmlFor="categories" className="block text-base font-semibold text-[#1f2328] mb-2">
+        <label className="block text-base font-semibold text-[#1f2328] mb-2">
           カテゴリー
         </label>
-        <select
-          id="categories"
-          multiple
-          value={selectedCategoryIds.map(String)}
-          onChange={handleCategoryChange}
-          className="w-full px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 bg-white cursor-pointer focus:border-blue-600"
-          size={5}
-          disabled={submitting}
-        >
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+        <div className="border border-[#d0d7de] rounded-md p-4 bg-white">
+          {categories.length === 0 ? (
+            <div className="text-gray-500">カテゴリーがありません</div>
+          ) : (
+            <div className="space-y-2">
+              {categories.map((category) => (
+                <label
+                  key={category.id}
+                  className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedCategoryIds.includes(category.id)}
+                    onChange={() => handleCategoryToggle(category.id)}
+                    disabled={submitting}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                  <span className="text-base">{category.name}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex gap-4 mt-10">
