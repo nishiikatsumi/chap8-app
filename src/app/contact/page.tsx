@@ -1,6 +1,5 @@
 "use client";
 import { useState } from 'react';
-import classes from "../_styles/Contact.module.css";
 
 export default function Contact() {
   const [loading, setLoading] = useState(false);
@@ -24,7 +23,7 @@ export default function Contact() {
 	  }
     return '';
 	};
-	
+
   const validateEmail = (email: string) => {
     if (!email) {
       return 'メールアドレスは必須です。';
@@ -44,7 +43,7 @@ export default function Contact() {
 	  }
     return '';
 	};
-	
+
   const validateField = (name: string, value: string) => {
     switch (name) {
       case 'name':
@@ -114,14 +113,14 @@ export default function Contact() {
   };
 
   return (
-    <div className={classes.container}>
-      <div className={classes['form-wrapper']}>
-        <h1 className={classes.title}>問合わせフォーム</h1>
+    <div className="min-h-screen bg-white p-8">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-2xl font-bold mb-10">問合わせフォーム</h1>
 
-        <form onSubmit={handleSubmit} className={classes.form} noValidate>
-          <div className={classes['form-group']}>
-            <div className={classes['form-row']}>
-              <label className={classes['form-label']}>お名前</label>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-8">
+              <label className="w-32 text-sm flex-shrink-0">お名前</label>
               <input
                 type="text"
                 name="name"
@@ -129,17 +128,21 @@ export default function Contact() {
                 onChange={handleChange}
 				        required
 				        disabled={loading}
-                className={`${classes['form-input']} ${errors.name ? classes['input-error'] : ''}`}
+                className={`flex-1 px-4 py-3 border rounded-lg text-base outline-none transition-colors duration-200 ${
+                  errors.name
+                    ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-300'
+                    : 'border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-300'
+                }`}
               />
             </div>
               {errors.name && (
-              <div className={classes['error-message']}>{errors.name}</div>
+              <div className="text-red-600 text-sm mt-2 ml-40">{errors.name}</div>
             )}
           </div>
 
-          <div className={classes['form-group']}>
-            <div className={classes['form-row']}>
-              <label className={classes['form-label']}>メールアドレス</label>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-8">
+              <label className="w-32 text-sm flex-shrink-0">メールアドレス</label>
               <input
                 type="email"
                 name="email"
@@ -147,17 +150,21 @@ export default function Contact() {
                 onChange={handleChange}
 				        required
 				        disabled={loading}
-                className={`${classes['form-input']} ${errors.email ? classes['input-error'] : ''}`}
+                className={`flex-1 px-4 py-3 border rounded-lg text-base outline-none transition-colors duration-200 ${
+                  errors.email
+                    ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-300'
+                    : 'border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-300'
+                }`}
               />
             </div>
             {errors.email && (
-              <div className={classes['error-message']}>{errors.email}</div>
+              <div className="text-red-600 text-sm mt-2 ml-40">{errors.email}</div>
             )}
           </div>
 
-          <div className={classes['form-group']}>
-            <div className={`${classes['form-row']} ${classes['form-row-textarea']}`}>
-              <label className={classes['form-label']}>本文</label>
+          <div className="flex flex-col">
+            <div className="flex items-start gap-8">
+              <label className="w-32 text-sm flex-shrink-0 pt-3">本文</label>
               <textarea
                 name="message"
                 value={formData.message}
@@ -165,19 +172,32 @@ export default function Contact() {
                 rows={8}
 				        required
 				        disabled={loading}
-                className={`${classes['form-textarea']} ${errors.message ? classes['input-error'] : ''}`}
+                className={`flex-1 px-4 py-3 border rounded-lg text-base outline-none transition-colors duration-200 resize-y font-inherit ${
+                  errors.message
+                    ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-300'
+                    : 'border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-300'
+                }`}
               />
             </div>
             {errors.message && (
-              <div className={classes['error-message']}>{errors.message}</div>
+              <div className="text-red-600 text-sm mt-2 ml-40">{errors.message}</div>
             )}
           </div>
 
-          <div className={classes['button-group']}>
-            <button type="submit" disabled={loading} className={`${classes.btn} ${classes['btn-submit']}`}>
+          <div className="flex justify-center gap-4 pt-6">
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-gray-800 text-white px-8 py-2.5 rounded-lg text-base cursor-pointer border-0 transition-colors duration-200 hover:bg-gray-700"
+            >
               送信
             </button>
-            <button type="button" disabled={loading} onClick={handleClear} className={`${classes.btn} ${classes['btn-clear']}`}>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={handleClear}
+              className="bg-gray-200 text-gray-800 px-8 py-2.5 rounded-lg text-base cursor-pointer border-0 transition-colors duration-200 hover:bg-gray-300"
+            >
               クリア
             </button>
           </div>

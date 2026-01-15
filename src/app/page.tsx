@@ -2,26 +2,23 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getDateString } from './_utils/getDateString';
-import classes from './_styles/Home.module.css';
 import DOMPurify from 'isomorphic-dompurify';
-import type { MicroCmsPost } from './_types/MicroCmsPost';
+import type { Post } from './_types/Types';
 
 export default function Home() {
-  const [posts, setPosts] = useState<MicroCmsPost[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const res = await fetch('https://4v36lonum5.microcms.io/api/v1/posts', {
-          headers: {
-            'X-MICROCMS-API-KEY': process.env.NEXT_PUBLIC_MICROCMS_API_KEY,
-          }
+        const res = await fetch('/api/posts', {
+          cache: "no-cache"
         });
 
         if (res.ok) {
           const data = await res.json();
-          setPosts(data.contents);
+          setPosts(data.posts);
         }
       } catch {
         setPosts([]);
@@ -43,25 +40,25 @@ export default function Home() {
 
   return (
     <div>
-      <main className={classes.main}>
+      <main className="max-w-4xl mx-auto py-10 px-5">
         {posts.map(article => (
           <Link
             key={article.id}
             href={`/article/${article.id}`}
-            className={classes.cardLink}
+            className="no-underline text-inherit"
           >
-            <article className={classes.card}>
-              <div className={classes.header}>
-                <span className={classes.date}>{getDateString(article.createdAt)}</span>
-                <div className={classes.tags}>
-                  {article.categories && article.categories.map((tag) => (
-                    <span key={tag.id} className={classes.tag}>{tag.name}</span>
+            <article className="bg-white border border-gray-200 px-8 py-6 mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-sm text-gray-500">{getDateString(article.createdAt)}</span>
+                <div className="flex gap-2">
+                  {article.postCategories && article.postCategories.map((tag) => (
+                    <span key={tag.category.id} className="border border-blue-500 text-blue-500 px-3 py-1 rounded text-xs bg-transparent">{tag.category.name}</span>
                   ))}
                 </div>
               </div>
-              <h2 className={classes.title}>{article.title}</h2>
+              <h2 className="text-xl font-normal mb-4 text-gray-800">{article.title}</h2>
               <p
-                className={classes.excerpt}
+                className="text-sm text-gray-600 leading-relaxed line-clamp-2"
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content) }}
               />
             </article>
