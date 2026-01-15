@@ -1,21 +1,54 @@
+'use client'
+
 import Link from "next/link";
 import { CategoriesIndexResponse } from "../../_types/PrismaTypes";
 import { getDateString } from "../../_utils/getDateString";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import { useEffect, useState } from "react";
 
-async function getCategories(): Promise<CategoriesIndexResponse> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories`, {
-    cache: 'no-store',
-  });
+export default function CategoriesPage() {
+  const { token, isLoading } = useSupabaseSession();
+  const [categories, setCategories] = useState<CategoriesIndexResponse['categories']>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!res.ok) {
-    throw new Error('Failed to fetch categories');
+  useEffect(() => {
+    if (isLoading) return;
+    if (!token) {
+      setCategories([]);
+      setLoading(false);
+      return;
+    }
+
+    const getCategories = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories`, {
+          headers: {
+            'Content-Type': 'application/json',
+            "Authorization": token,
+          },
+          cache: 'no-store',
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to fetch categories');
+        }
+
+        const data: CategoriesIndexResponse = await res.json();
+        setCategories(data.categories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setCategories([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getCategories();
+  }, [token, isLoading]);
+
+  if (loading) {
+    return <div>読み込み中...</div>;
   }
-
-  return res.json();
-}
-
-export default async function CategoriesPage() {
-  const { categories } = await getCategories();
 
   return (
     <>

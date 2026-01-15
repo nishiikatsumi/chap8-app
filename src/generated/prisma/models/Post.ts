@@ -1208,6 +1208,7 @@ export type PostCreateManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * The data used to create many Posts.
    */
   data: Prisma.PostCreateManyInput | Prisma.PostCreateManyInput[]
+  skipDuplicates?: boolean
 }
 
 /**
@@ -1226,6 +1227,7 @@ export type PostCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * The data used to create many Posts.
    */
   data: Prisma.PostCreateManyInput | Prisma.PostCreateManyInput[]
+  skipDuplicates?: boolean
 }
 
 /**

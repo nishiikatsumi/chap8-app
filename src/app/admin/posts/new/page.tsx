@@ -1,15 +1,19 @@
 "use client";
 import { useRouter } from 'next/navigation';
 import PostForm, { type PostFormData } from '@/app/_components/PostForm';
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 
 export default function PostNewPage() {
   const router = useRouter();
+  const { token } = useSupabaseSession();
 
   const handleSubmit = async (data: PostFormData) => {
+    if (!token) return;
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        "Authorization": token,
       },
       body: JSON.stringify(data),
     });

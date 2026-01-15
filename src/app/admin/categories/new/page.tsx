@@ -1,15 +1,19 @@
 "use client";
 import { useRouter } from 'next/navigation';
 import CategoryForm from '@/app/_components/CategoryForm';
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 
 export default function CategoryNewPage() {
   const router = useRouter();
+  const { token } = useSupabaseSession();
 
   const handleSubmit = async (name: string) => {
+    if (!token) return;
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        "Authorization": token,
       },
       body: JSON.stringify({ name }),
     });

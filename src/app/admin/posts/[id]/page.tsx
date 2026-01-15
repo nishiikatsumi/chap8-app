@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import PostForm, { type PostFormData } from '@/app/_components/PostForm';
 import type { Post } from "../../../_types/Types";
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 
 interface Props {
   params: Promise<{
@@ -14,13 +15,19 @@ export default function PostEditPage({ params }: Props) {
   const router = useRouter();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
+  const { token } = useSupabaseSession();
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!token) return;
       try {
         const { id } = await params;
 
         const postRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts/${id}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            "Authorization": token,
+          },
           cache: 'no-store',
         });
 
@@ -36,14 +43,16 @@ export default function PostEditPage({ params }: Props) {
     };
 
     fetchData();
-  }, [params]);
+  }, [token, params]);
 
   const handleUpdate = async (data: PostFormData) => {
     const { id } = await params;
+    if (!token) return;
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        "Authorization": token,
       },
       body: JSON.stringify(data),
     });
@@ -57,8 +66,13 @@ export default function PostEditPage({ params }: Props) {
   };
 
   const handleDelete = async () => {
+    if (!token) return;
     const { id } = await params;
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts/${id}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        "Authorization": token,
+      },
       method: 'DELETE',
     });
 

@@ -1,21 +1,54 @@
+'use client'
+
 import Link from "next/link";
 import { PostsIndexResponse } from "../_types/PrismaTypes";
 import { getDateString } from "../_utils/getDateString";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import { useEffect, useState } from "react";
 
-async function getPosts(): Promise<PostsIndexResponse> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts`, {
-    cache: 'no-store',
-  });
+export default function AdminPage() {
+  const { token, isLoading } = useSupabaseSession();
+  const [posts, setPosts] = useState<PostsIndexResponse['posts']>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!res.ok) {
-    throw new Error('Failed to fetch posts');
+  useEffect(() => {
+    if (isLoading) return;
+    if (!token) {
+      setPosts([]);
+      setLoading(false);
+      return;
+    }
+
+    const getPosts = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts`, {
+          headers: {
+            'Content-Type': 'application/json',
+            "Authorization": token,
+          },
+          cache: 'no-store',
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to fetch posts');
+        }
+
+        const data: PostsIndexResponse = await res.json();
+        setPosts(data.posts);
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+        setPosts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getPosts();
+  }, [token, isLoading]);
+
+  if (loading) {
+    return <div>読み込み中...</div>;
   }
-
-  return res.json();
-}
-
-export default async function AdminPage() {
-  const { posts } = await getPosts();
 
   return (
     <>

@@ -7,7 +7,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  // provider = "sqlite"
+  // providerを "postgresql" に書き換える
+  provider = "postgresql"
 }
 
 model Post {

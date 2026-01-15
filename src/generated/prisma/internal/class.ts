@@ -19,8 +19,8 @@ const config: runtime.GetPrismaClientConfig = {
   "previewFeatures": [],
   "clientVersion": "7.2.0",
   "engineVersion": "0c8ef2ce45c83248ab3df073180d5eda9e8be7a3",
-  "activeProvider": "sqlite",
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\ngenerator client {\n  provider = \"prisma-client\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n}\n\nmodel Post {\n  id             Int            @id @default(autoincrement())\n  title          String\n  content        String\n  thumbnailUrl   String         @map(\"thumbnail_url\")\n  createdAt      DateTime       @default(now()) @map(\"created_at\")\n  updatedAt      DateTime       @updatedAt @map(\"updated_at\")\n  postCategories PostCategory[]\n}\n\nmodel Category {\n  id        Int            @id @default(autoincrement())\n  name      String\n  createdAt DateTime       @default(now()) @map(\"created_at\")\n  updatedAt DateTime       @updatedAt @map(\"updated_at\")\n  posts     PostCategory[]\n}\n\nmodel PostCategory {\n  id         Int      @id @default(autoincrement())\n  postId     Int\n  categoryId Int      @map(\"category_id\")\n  createdAt  DateTime @default(now()) @map(\"created_at\")\n  updatedAt  DateTime @updatedAt @map(\"updated_at\")\n  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)\n  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)\n}\n",
+  "activeProvider": "postgresql",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\ngenerator client {\n  provider = \"prisma-client\"\n  output   = \"../src/generated/prisma\"\n}\n\ndatasource db {\n  // provider = \"sqlite\"\n  // providerを \"postgresql\" に書き換える\n  provider = \"postgresql\"\n}\n\nmodel Post {\n  id             Int            @id @default(autoincrement())\n  title          String\n  content        String\n  thumbnailUrl   String         @map(\"thumbnail_url\")\n  createdAt      DateTime       @default(now()) @map(\"created_at\")\n  updatedAt      DateTime       @updatedAt @map(\"updated_at\")\n  postCategories PostCategory[]\n}\n\nmodel Category {\n  id        Int            @id @default(autoincrement())\n  name      String\n  createdAt DateTime       @default(now()) @map(\"created_at\")\n  updatedAt DateTime       @updatedAt @map(\"updated_at\")\n  posts     PostCategory[]\n}\n\nmodel PostCategory {\n  id         Int      @id @default(autoincrement())\n  postId     Int\n  categoryId Int      @map(\"category_id\")\n  createdAt  DateTime @default(now()) @map(\"created_at\")\n  updatedAt  DateTime @updatedAt @map(\"updated_at\")\n  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)\n  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -37,10 +37,10 @@ async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Modul
 }
 
 config.compilerWasm = {
-  getRuntime: async () => await import("@prisma/client/runtime/query_compiler_bg.sqlite.mjs"),
+  getRuntime: async () => await import("@prisma/client/runtime/query_compiler_bg.postgresql.mjs"),
 
   getQueryCompilerWasmModule: async () => {
-    const { wasm } = await import("@prisma/client/runtime/query_compiler_bg.sqlite.wasm-base64.mjs")
+    const { wasm } = await import("@prisma/client/runtime/query_compiler_bg.postgresql.wasm-base64.mjs")
     return await decodeBase64AsWasm(wasm)
   }
 }

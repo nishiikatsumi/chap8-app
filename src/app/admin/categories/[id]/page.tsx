@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import CategoryForm from '@/app/_components/CategoryForm';
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 
 interface Category {
   id: number;
@@ -20,12 +21,18 @@ export default function CategoryEditPage({ params }: Props) {
   const router = useRouter();
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
+  const { token } = useSupabaseSession()
 
   useEffect(() => {
     const fetchCategory = async () => {
+      if (!token) return;
       try {
         const { id } = await params;
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories/${id}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            "Authorization": token!
+          },
           cache: 'no-store',
         });
 
@@ -41,14 +48,16 @@ export default function CategoryEditPage({ params }: Props) {
     };
 
     fetchCategory();
-  }, [params]);
+  }, [params, token]);
 
   const handleUpdate = async (name: string) => {
+    if (!token) return;
     const { id } = await params;
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        "Authorization": token,
       },
       body: JSON.stringify({ name }),
     });
@@ -62,8 +71,13 @@ export default function CategoryEditPage({ params }: Props) {
   };
 
   const handleDelete = async () => {
+    if (!token) return;
     const { id } = await params;
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories/${id}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        "Authorization": token,
+      },
       method: 'DELETE',
     });
 
