@@ -38,7 +38,7 @@ export type PostMinAggregateOutputType = {
   id: number | null
   title: string | null
   content: string | null
-  thumbnailUrl: string | null
+  thumbnailImageKey: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -47,7 +47,7 @@ export type PostMaxAggregateOutputType = {
   id: number | null
   title: string | null
   content: string | null
-  thumbnailUrl: string | null
+  thumbnailImageKey: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -56,7 +56,7 @@ export type PostCountAggregateOutputType = {
   id: number
   title: number
   content: number
-  thumbnailUrl: number
+  thumbnailImageKey: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -75,7 +75,7 @@ export type PostMinAggregateInputType = {
   id?: true
   title?: true
   content?: true
-  thumbnailUrl?: true
+  thumbnailImageKey?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -84,7 +84,7 @@ export type PostMaxAggregateInputType = {
   id?: true
   title?: true
   content?: true
-  thumbnailUrl?: true
+  thumbnailImageKey?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -93,7 +93,7 @@ export type PostCountAggregateInputType = {
   id?: true
   title?: true
   content?: true
-  thumbnailUrl?: true
+  thumbnailImageKey?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -189,7 +189,7 @@ export type PostGroupByOutputType = {
   id: number
   title: string
   content: string
-  thumbnailUrl: string
+  thumbnailImageKey: string
   createdAt: Date
   updatedAt: Date
   _count: PostCountAggregateOutputType | null
@@ -221,7 +221,7 @@ export type PostWhereInput = {
   id?: Prisma.IntFilter<"Post"> | number
   title?: Prisma.StringFilter<"Post"> | string
   content?: Prisma.StringFilter<"Post"> | string
-  thumbnailUrl?: Prisma.StringFilter<"Post"> | string
+  thumbnailImageKey?: Prisma.StringFilter<"Post"> | string
   createdAt?: Prisma.DateTimeFilter<"Post"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Post"> | Date | string
   postCategories?: Prisma.PostCategoryListRelationFilter
@@ -231,7 +231,7 @@ export type PostOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
-  thumbnailUrl?: Prisma.SortOrder
+  thumbnailImageKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   postCategories?: Prisma.PostCategoryOrderByRelationAggregateInput
@@ -244,7 +244,7 @@ export type PostWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.PostWhereInput | Prisma.PostWhereInput[]
   title?: Prisma.StringFilter<"Post"> | string
   content?: Prisma.StringFilter<"Post"> | string
-  thumbnailUrl?: Prisma.StringFilter<"Post"> | string
+  thumbnailImageKey?: Prisma.StringFilter<"Post"> | string
   createdAt?: Prisma.DateTimeFilter<"Post"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Post"> | Date | string
   postCategories?: Prisma.PostCategoryListRelationFilter
@@ -254,7 +254,7 @@ export type PostOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
-  thumbnailUrl?: Prisma.SortOrder
+  thumbnailImageKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.PostCountOrderByAggregateInput
@@ -271,7 +271,7 @@ export type PostScalarWhereWithAggregatesInput = {
   id?: Prisma.IntWithAggregatesFilter<"Post"> | number
   title?: Prisma.StringWithAggregatesFilter<"Post"> | string
   content?: Prisma.StringWithAggregatesFilter<"Post"> | string
-  thumbnailUrl?: Prisma.StringWithAggregatesFilter<"Post"> | string
+  thumbnailImageKey?: Prisma.StringWithAggregatesFilter<"Post"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Post"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Post"> | Date | string
 }
@@ -279,7 +279,7 @@ export type PostScalarWhereWithAggregatesInput = {
 export type PostCreateInput = {
   title: string
   content: string
-  thumbnailUrl: string
+  thumbnailImageKey: string
   createdAt?: Date | string
   updatedAt?: Date | string
   postCategories?: Prisma.PostCategoryCreateNestedManyWithoutPostInput
@@ -289,7 +289,7 @@ export type PostUncheckedCreateInput = {
   id?: number
   title: string
   content: string
-  thumbnailUrl: string
+  thumbnailImageKey: string
   createdAt?: Date | string
   updatedAt?: Date | string
   postCategories?: Prisma.PostCategoryUncheckedCreateNestedManyWithoutPostInput
@@ -298,7 +298,7 @@ export type PostUncheckedCreateInput = {
 export type PostUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  thumbnailUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailImageKey?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   postCategories?: Prisma.PostCategoryUpdateManyWithoutPostNestedInput
@@ -308,7 +308,7 @@ export type PostUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  thumbnailUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailImageKey?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   postCategories?: Prisma.PostCategoryUncheckedUpdateManyWithoutPostNestedInput
@@ -318,7 +318,7 @@ export type PostCreateManyInput = {
   id?: number
   title: string
   content: string
-  thumbnailUrl: string
+  thumbnailImageKey: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -326,7 +326,7 @@ export type PostCreateManyInput = {
 export type PostUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  thumbnailUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailImageKey?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -335,7 +335,7 @@ export type PostUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  thumbnailUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailImageKey?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -344,7 +344,7 @@ export type PostCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
-  thumbnailUrl?: Prisma.SortOrder
+  thumbnailImageKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -357,7 +357,7 @@ export type PostMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
-  thumbnailUrl?: Prisma.SortOrder
+  thumbnailImageKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -366,7 +366,7 @@ export type PostMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   title?: Prisma.SortOrder
   content?: Prisma.SortOrder
-  thumbnailUrl?: Prisma.SortOrder
+  thumbnailImageKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -413,7 +413,7 @@ export type PostUpdateOneRequiredWithoutPostCategoriesNestedInput = {
 export type PostCreateWithoutPostCategoriesInput = {
   title: string
   content: string
-  thumbnailUrl: string
+  thumbnailImageKey: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -422,7 +422,7 @@ export type PostUncheckedCreateWithoutPostCategoriesInput = {
   id?: number
   title: string
   content: string
-  thumbnailUrl: string
+  thumbnailImageKey: string
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -446,7 +446,7 @@ export type PostUpdateToOneWithWhereWithoutPostCategoriesInput = {
 export type PostUpdateWithoutPostCategoriesInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  thumbnailUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailImageKey?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -455,7 +455,7 @@ export type PostUncheckedUpdateWithoutPostCategoriesInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   title?: Prisma.StringFieldUpdateOperationsInput | string
   content?: Prisma.StringFieldUpdateOperationsInput | string
-  thumbnailUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  thumbnailImageKey?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -495,7 +495,7 @@ export type PostSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   id?: boolean
   title?: boolean
   content?: boolean
-  thumbnailUrl?: boolean
+  thumbnailImageKey?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   postCategories?: boolean | Prisma.Post$postCategoriesArgs<ExtArgs>
@@ -506,7 +506,7 @@ export type PostSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   title?: boolean
   content?: boolean
-  thumbnailUrl?: boolean
+  thumbnailImageKey?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["post"]>
@@ -515,7 +515,7 @@ export type PostSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   id?: boolean
   title?: boolean
   content?: boolean
-  thumbnailUrl?: boolean
+  thumbnailImageKey?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["post"]>
@@ -524,12 +524,12 @@ export type PostSelectScalar = {
   id?: boolean
   title?: boolean
   content?: boolean
-  thumbnailUrl?: boolean
+  thumbnailImageKey?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type PostOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "thumbnailUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["post"]>
+export type PostOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "thumbnailImageKey" | "createdAt" | "updatedAt", ExtArgs["result"]["post"]>
 export type PostInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   postCategories?: boolean | Prisma.Post$postCategoriesArgs<ExtArgs>
   _count?: boolean | Prisma.PostCountOutputTypeDefaultArgs<ExtArgs>
@@ -546,7 +546,7 @@ export type $PostPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     id: number
     title: string
     content: string
-    thumbnailUrl: string
+    thumbnailImageKey: string
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["post"]>
@@ -976,7 +976,7 @@ export interface PostFieldRefs {
   readonly id: Prisma.FieldRef<"Post", 'Int'>
   readonly title: Prisma.FieldRef<"Post", 'String'>
   readonly content: Prisma.FieldRef<"Post", 'String'>
-  readonly thumbnailUrl: Prisma.FieldRef<"Post", 'String'>
+  readonly thumbnailImageKey: Prisma.FieldRef<"Post", 'String'>
   readonly createdAt: Prisma.FieldRef<"Post", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Post", 'DateTime'>
 }

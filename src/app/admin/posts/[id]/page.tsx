@@ -99,7 +99,7 @@ export default function PostEditPage({ params }: Props) {
         initialData={{
           title: post.title,
           content: post.content,
-          thumbnailUrl: post.thumbnailUrl,
+          thumbnailImageKey: post.thumbnailImageKey,
           selectedCategoryIds: post.postCategories.map((pc) => pc.category.id),
         }}
         onSubmit={handleUpdate}

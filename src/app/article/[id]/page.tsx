@@ -4,6 +4,7 @@ import { getDateString } from '../../_utils/getDateString';
 import DOMPurify from 'isomorphic-dompurify';
 import type { Post } from '../../_types/Types';
 import Image from 'next/image';
+import { supabase } from '@/app/_libs/supabase';
 
 interface Props {
   params: Promise<{
@@ -15,6 +16,7 @@ interface Props {
 export default function Article(props: Props) {
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -27,6 +29,14 @@ export default function Article(props: Props) {
         if (res.ok) {
           const data = await res.json();
           setPost(data.post);
+
+          // thumbnailImageKeyからpublicUrlを取得
+          if (data.post.thumbnailImageKey) {
+            const { data: urlData } = supabase.storage
+              .from('post_thumbnail')
+              .getPublicUrl(data.post.thumbnailImageKey);
+            setThumbnailUrl(urlData.publicUrl);
+          }
         } else {
           setPost(null);
         }
@@ -52,15 +62,17 @@ export default function Article(props: Props) {
     <div>
       <main className="max-w-4xl mx-auto py-10 px-5">
         <article key={post.id} className="bg-white border border-gray-200 px-8 py-6 mb-6">
-          <div>
-            <Image
-              height={500}
-              width={800}
-              src={post.thumbnailUrl}
-              alt={`${post.title}の画像`}
-              className="w-full h-auto rounded"
-            />
-          </div>
+          {thumbnailUrl && (
+            <div>
+              <Image
+                height={500}
+                width={800}
+                src={thumbnailUrl}
+                alt={`${post.title}の画像`}
+                className="w-full h-auto rounded"
+              />
+            </div>
+          )}
           <div className="flex justify-between items-center mb-3">
             <span className="text-sm text-gray-500">{getDateString(post.createdAt)}</span>
             <div className="flex gap-2">

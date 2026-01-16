@@ -11,7 +11,7 @@ export interface Post {
   content: string;
   createdAt: Date;
   updatedAt: Date;
-  thumbnailUrl: string;
+  thumbnailImageKey: string;
   postCategories: {
     category: Category;
   }[];

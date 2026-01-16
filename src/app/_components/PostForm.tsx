@@ -1,5 +1,9 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
+import { supabase } from '@/app/_libs/supabase'
+import { v4 as uuidv4 } from 'uuid'  // 固有IDを生成するライブラリ
+import Image from 'next/image'
+import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession'
 
 interface Category {
   id: number;
@@ -9,7 +13,7 @@ interface Category {
 export interface PostFormData {
   title: string;
   content: string;
-  thumbnailUrl: string;
+  thumbnailImageKey: string;
   categories: { id: number }[];
 }
 
@@ -17,7 +21,7 @@ interface PostFormProps {
   initialData?: {
     title: string;
     content: string;
-    thumbnailUrl: string;
+    thumbnailImageKey: string;
     selectedCategoryIds: number[];
   };
   onSubmit: (data: PostFormData) => Promise<void>;
@@ -29,27 +33,58 @@ export default function PostForm({
   initialData = {
     title: '',
     content: '',
-    thumbnailUrl: '',
+    thumbnailImageKey: '',
     selectedCategoryIds: [],
   },
   onSubmit,
   onDelete,
   submitLabel,
 }: PostFormProps) {
+  const { token, isLoading: isTokenLoading } = useSupabaseSession();
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState(initialData.title);
   const [content, setContent] = useState(initialData.content);
-  const [thumbnailUrl, setThumbnailUrl] = useState(initialData.thumbnailUrl);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>(
     initialData.selectedCategoryIds
   );
+  const [thumbnailImageKey, setThumbnailImageKey] = useState<string>(initialData.thumbnailImageKey);
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(
+    null,
+  );  
 
   useEffect(() => {
+    if (!thumbnailImageKey) return
+
+    // アップロード時に取得した、thumbnailImageKeyを用いて画像のURLを取得
+    const fetcher = async () => {
+      const {
+        data: { publicUrl },
+      } = await supabase.storage
+        .from('post_thumbnail')
+        .getPublicUrl(thumbnailImageKey)
+
+      setThumbnailImageUrl(publicUrl)
+    }
+
+    fetcher()
+  }, [thumbnailImageKey])
+
+  useEffect(() => {
+    if (isTokenLoading) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     const fetchCategories = async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token,
+          },
           cache: 'no-store',
         });
 
@@ -65,7 +100,7 @@ export default function PostForm({
     };
 
     fetchCategories();
-  }, []);
+  }, [token, isTokenLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +110,7 @@ export default function PostForm({
       await onSubmit({
         title,
         content,
-        thumbnailUrl,
+        thumbnailImageKey: thumbnailImageKey || '',
         categories: selectedCategoryIds.map((id) => ({ id })),
       });
     } finally {
@@ -97,6 +132,38 @@ export default function PostForm({
     } finally {
       setSubmitting(false);
     }
+
+
+  };
+
+  const handleImageChange = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ): Promise<void> => {
+    if (!event.target.files || event.target.files.length == 0) {
+      // 画像が選択されていないのでreturn
+      return
+    }
+
+    const file = event.target.files[0] // 選択された画像を取得
+
+    const filePath = `private/${uuidv4()}` // ファイルパスを指定
+
+    // Supabaseに画像をアップロード
+    const { data, error } = await supabase.storage
+      .from('post_thumbnail')　// ここでバケット名を指定
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      })
+
+    // アップロードに失敗したらエラーを表示して終了
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    // data.pathに、画像固有のkeyが入っているので、thumbnailImageKeyに格納する
+    setThumbnailImageKey(data.path)
   };
 
   const handleCategoryToggle = (categoryId: number) => {
@@ -111,7 +178,7 @@ export default function PostForm({
     });
   };
 
-  if (loading) {
+  if (loading || isTokenLoading) {
     return <div>読み込み中...</div>;
   }
 
@@ -147,19 +214,50 @@ export default function PostForm({
       </div>
 
       <div className="mb-8">
-        <label htmlFor="thumbnailUrl" className="block text-base font-semibold text-[#1f2328] mb-2">
-          サムネイルURL
+        <label
+          htmlFor="thumbnailImageKey"
+          className="block text-base font-semibold text-[#1f2328] mb-2"
+        >
+          サムネイル画像
         </label>
-        <input
-          type="url"
-          id="thumbnailUrl"
-          value={thumbnailUrl}
-          onChange={(e) => setThumbnailUrl(e.target.value)}
-          className="w-full px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 focus:border-blue-600"
-          required
-          disabled={submitting}
-        />
+        {!thumbnailImageUrl ? (
+          <input
+            type="file"
+            id="thumbnailImageKey"
+            onChange={handleImageChange}
+            accept="image/*"
+            disabled={submitting}
+            className="w-full px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 focus:border-blue-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+        ) : (
+          <div>
+            <div className="mb-4">
+              <Image
+                src={thumbnailImageUrl}
+                alt="thumbnail"
+                width={400}
+                height={400}
+                className="rounded-md border border-[#d0d7de]"
+              />
+            </div>
+            <label
+              htmlFor="thumbnailImageKey"
+              className="inline-block bg-gray-100 text-gray-700 px-6 py-2 border border-[#d0d7de] rounded-md text-sm font-semibold cursor-pointer transition-colors duration-200 hover:bg-gray-200"
+            >
+              画像を変更
+              <input
+                type="file"
+                id="thumbnailImageKey"
+                onChange={handleImageChange}
+                accept="image/*"
+                disabled={submitting}
+                className="hidden"
+              />
+            </label>
+          </div>
+        )}
       </div>
+
 
       <div className="mb-8">
         <label className="block text-base font-semibold text-[#1f2328] mb-2">
