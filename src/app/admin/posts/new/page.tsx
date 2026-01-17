@@ -9,7 +9,7 @@ export default function PostNewPage() {
 
   const handleSubmit = async (data: PostFormData) => {
     if (!token) return;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts`, {
+    const res = await fetch(`/api/admin/posts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

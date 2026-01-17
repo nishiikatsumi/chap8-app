@@ -16,3 +16,8 @@ export interface Post {
     category: Category;
   }[];
 }
+
+export interface UserInputs {
+  email: string;
+  password: string;
+};

@@ -1,6 +1,7 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { use } from 'react';
 import { useRouter } from 'next/navigation';
+import useSWR from 'swr';
 import PostForm, { type PostFormData } from '@/app/_components/PostForm';
 import type { Post } from "../../../_types/Types";
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
@@ -13,42 +14,34 @@ interface Props {
 
 export default function PostEditPage({ params }: Props) {
   const router = useRouter();
-  const [post, setPost] = useState<Post | null>(null);
-  const [loading, setLoading] = useState(true);
   const { token } = useSupabaseSession();
+  const { id } = use(params);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!token) return;
-      try {
-        const { id } = await params;
+  const fetcher = async (url: string, token: string) => {
+    const res = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        "Authorization": token,
+      },
+      cache: 'no-store',
+    });
 
-        const postRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts/${id}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            "Authorization": token,
-          },
-          cache: 'no-store',
-        });
+    if (!res.ok) {
+      throw new Error('Failed to fetch post');
+    }
 
-        if (postRes.ok) {
-          const postData = await postRes.json();
-          setPost(postData.post);
-        }
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const data = await res.json();
+    return data.post;
+  };
 
-    fetchData();
-  }, [token, params]);
+  const { data: post, error, isLoading } = useSWR<Post>(
+    token ? [`/api/admin/posts/${id}`, token] : null,
+    ([url, token]: [string, string]) => fetcher(url, token)
+  );
 
   const handleUpdate = async (data: PostFormData) => {
-    const { id } = await params;
     if (!token) return;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts/${id}`, {
+    const res = await fetch(`/api/admin/posts/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -67,8 +60,7 @@ export default function PostEditPage({ params }: Props) {
 
   const handleDelete = async () => {
     if (!token) return;
-    const { id } = await params;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts/${id}`, {
+    const res = await fetch(`/api/admin/posts/${id}`, {
       headers: {
         'Content-Type': 'application/json',
         "Authorization": token,
@@ -84,8 +76,13 @@ export default function PostEditPage({ params }: Props) {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return <div>読み込み中...</div>;
+  }
+
+  if (error) {
+    console.error('Failed to fetch post:', error);
+    return <div>記事の読み込みに失敗しました</div>;
   }
 
   if (!post) {

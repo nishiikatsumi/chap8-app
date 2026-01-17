@@ -9,7 +9,7 @@ export default function CategoryNewPage() {
 
   const handleSubmit = async (name: string) => {
     if (!token) return;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories`, {
+    const res = await fetch(`/api/admin/categories`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

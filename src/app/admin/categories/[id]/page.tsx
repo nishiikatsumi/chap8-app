@@ -1,15 +1,11 @@
 "use client";
-import { useState, useEffect } from 'react';
+
 import { useRouter } from 'next/navigation';
 import CategoryForm from '@/app/_components/CategoryForm';
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
-
-interface Category {
-  id: number;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { use } from 'react';
+import useSWR from 'swr';
+import type { Category } from '../../../_types/Types';
 
 interface Props {
   params: Promise<{
@@ -19,41 +15,35 @@ interface Props {
 
 export default function CategoryEditPage({ params }: Props) {
   const router = useRouter();
-  const [category, setCategory] = useState<Category | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { token } = useSupabaseSession()
+  const { token } = useSupabaseSession();
+  const { id } = use(params)
 
-  useEffect(() => {
-    const fetchCategory = async () => {
-      if (!token) return;
-      try {
-        const { id } = await params;
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories/${id}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            "Authorization": token!
-          },
-          cache: 'no-store',
-        });
+  const fetcher = async (url: string, token: string) => {
+    const res = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        "Authorization": token,
+      },
+      cache: 'no-store',
+    });
 
-        if (res.ok) {
-          const data = await res.json();
-          setCategory(data.category);
-        }
-      } catch (error) {
-        console.error('Failed to fetch category:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!res.ok) {
+      throw new Error('Failed to fetch category');
+    }
 
-    fetchCategory();
-  }, [params, token]);
+    const data = await res.json();
+    return data.category;
+  }
+
+  const { data: category, error, isLoading} = useSWR<Category>(
+    token ? [`/api/admin/categories/${id}`, token] : null,
+    ([url, token]: [string, string]) => fetcher(url, token)
+  );
 
   const handleUpdate = async (name: string) => {
     if (!token) return;
     const { id } = await params;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories/${id}`, {
+    const res = await fetch(`/api/admin/categories/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -73,7 +63,7 @@ export default function CategoryEditPage({ params }: Props) {
   const handleDelete = async () => {
     if (!token) return;
     const { id } = await params;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories/${id}`, {
+    const res = await fetch(`/api/admin/categories/${id}`, {
       headers: {
         'Content-Type': 'application/json',
         "Authorization": token,
@@ -89,8 +79,12 @@ export default function CategoryEditPage({ params }: Props) {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return <div>読み込み中...</div>;
+  }
+
+  if (error) {
+    return <div>エラーが発生しました: {error.message}</div>;
   }
 
   if (!category) {

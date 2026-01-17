@@ -4,50 +4,39 @@ import Link from "next/link";
 import { CategoriesIndexResponse } from "../../_types/PrismaTypes";
 import { getDateString } from "../../_utils/getDateString";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
-import { useEffect, useState } from "react";
+import useSWR from "swr";
 
 export default function CategoriesPage() {
-  const { token, isLoading } = useSupabaseSession();
-  const [categories, setCategories] = useState<CategoriesIndexResponse['categories']>([]);
-  const [loading, setLoading] = useState(true);
+  const { token } = useSupabaseSession();
 
-  useEffect(() => {
-    if (isLoading) return;
-    if (!token) {
-      setCategories([]);
-      setLoading(false);
-      return;
+  const fetcher = async (url: string, token: string) => {
+    const res = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        "Authorization": token,
+      },
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to fetch categories');
     }
 
-    const getCategories = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories`, {
-          headers: {
-            'Content-Type': 'application/json',
-            "Authorization": token,
-          },
-          cache: 'no-store',
-        });
+    const data: CategoriesIndexResponse = await res.json();
+    return data.categories;
+  }
 
-        if (!res.ok) {
-          throw new Error('Failed to fetch categories');
-        }
+  const { data: categories, error, isLoading: isLoadingCategories } = useSWR(
+    token ? ['/api/admin/categories', token] : null,
+    ([url, token]: [string, string]) => fetcher(url, token)
+  );
 
-        const data: CategoriesIndexResponse = await res.json();
-        setCategories(data.categories);
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        setCategories([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getCategories();
-  }, [token, isLoading]);
-
-  if (loading) {
+  if (isLoadingCategories) {
     return <div>読み込み中...</div>;
+  }
+
+  if (error) {
+    console.error('Error fetching categories:', error);
   }
 
   return (
@@ -59,7 +48,7 @@ export default function CategoriesPage() {
         </Link>
       </div>
       <ul className="list-none p-0 m-0">
-        {categories.map((category) => (
+        {categories?.map((category: {id: number, name: string, createdAt: Date, updatedAt: Date}) => (
           <li key={category.id} className="py-6 border-b border-gray-200 cursor-pointer transition-colors duration-200 hover:bg-gray-50">
             <Link href={`/admin/categories/${category.id}`} className="no-underline text-inherit block">
               <h2 className="text-xl font-semibold text-[#1f2328] mb-2">{category.name}</h2>

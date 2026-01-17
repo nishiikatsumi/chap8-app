@@ -3,34 +3,38 @@
 import { supabase } from '@/app/_libs/supabase'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useForm } from 'react-hook-form';
+import type { UserInputs } from '@/app/_types/Types';
 
 export default function Page() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<UserInputs>()
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const onSubmit = async (data: UserInputs) => {
 
     setIsLoading(true)
 
     const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: data.email,
+      password: data.password,
     })
 
     if (error) {
       alert('ログインに失敗しました')
     } else {
-      router.replace('/admin/posts')
+      router.replace('/admin/')
     }
     setIsLoading(false)
   }
 
   return (
     <div className="flex justify-center pt-60">
-      <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-100">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-full max-w-100">
         <div>
           <label
             htmlFor="email"
@@ -40,14 +44,34 @@ export default function Page() {
           </label>
           <input
             type="email"
-            name="email"
             id="email"
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+            className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${errors.email ? 'border-red-400 bg-red-500/5' : 'border-white/10'}`}
             placeholder="name@company.com"
-            required
-            onChange={(e) => setEmail(e.target.value)}
             disabled={isLoading}
+            {...register('email', {
+              required: 'メールアドレスは必須です',
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: '有効なメールアドレスを入力してください',
+              },
+            })}
           />
+          {errors.email && (
+            <span className="flex items-center gap-1.5 mt-2 text-sm text-red-400">
+              <svg
+                className="w-3.5 h-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              {errors.email.message}
+            </span>
+          )}
         </div>
         <div>
           <label
@@ -58,14 +82,30 @@ export default function Page() {
           </label>
           <input
             type="password"
-            name="password"
             id="password"
             placeholder="••••••••"
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-            required
-            onChange={(e) => setPassword(e.target.value)}
+            className={`bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 ${errors.password ? 'border-red-400 bg-red-500/5' : 'border-white/10'}`}
             disabled={isLoading}
+            {...register('password', {
+              required: 'パスワードは必須です',
+            })}
           />
+          {errors.password && (
+            <span className="flex items-center gap-1.5 mt-2 text-sm text-red-400">
+              <svg
+                className="w-3.5 h-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              {errors.password.message}
+            </span>
+          )}
         </div>
 
         <div>
