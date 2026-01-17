@@ -1,5 +1,6 @@
 "use client";
 import { useRouter } from 'next/navigation';
+import { mutate } from 'swr';
 import CategoryForm from '@/app/_components/CategoryForm';
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 
@@ -20,6 +21,8 @@ export default function CategoryNewPage() {
 
     if (res.ok) {
       alert('カテゴリーを作成しました');
+      // SWRのキャッシュを再検証
+      await mutate(['/api/admin/categories', token]);
       router.push('/admin/categories');
     } else {
       alert('作成に失敗しました');

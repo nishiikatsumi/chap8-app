@@ -10,16 +10,18 @@ export default function AdminPage() {
   const { token } = useSupabaseSession();
 
   const fetcher = async (url: string, token: string) => {
-  const res = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      "Authorization": token,
-    },
-    cache: 'no-store',
+    const res = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        "Authorization": token,
+      },
+      cache: 'no-store',
     });
 
     if (!res.ok) {
-      throw new Error('Failed to fetch posts');
+      const errorData = await res.text();
+      console.error('Failed to fetch posts:', res.status, errorData);
+      throw new Error(`Failed to fetch posts: ${res.status}`);
     }
 
     const data: PostsIndexResponse = await res.json();
@@ -31,12 +33,17 @@ export default function AdminPage() {
     ([url, token]) => fetcher(url, token)
   );
 
+  if (!token) {
+    return <div className="text-red-600">認証が必要です</div>;
+  }
+
   if (isLoadingPosts) {
     return <div>読み込み中...</div>;
   }
 
   if (error) {
     console.error('Error fetching posts:', error);
+    return <div className="text-red-600">記事の取得に失敗しました: {error.message}</div>;
   }
 
   return (

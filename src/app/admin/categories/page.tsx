@@ -19,7 +19,9 @@ export default function CategoriesPage() {
     });
 
     if (!res.ok) {
-      throw new Error('Failed to fetch categories');
+      const errorData = await res.text();
+      console.error('Failed to fetch categories:', res.status, errorData);
+      throw new Error(`Failed to fetch categories: ${res.status}`);
     }
 
     const data: CategoriesIndexResponse = await res.json();
@@ -31,12 +33,17 @@ export default function CategoriesPage() {
     ([url, token]: [string, string]) => fetcher(url, token)
   );
 
+  if (!token) {
+    return <div className="text-red-600">認証が必要です</div>;
+  }
+
   if (isLoadingCategories) {
     return <div>読み込み中...</div>;
   }
 
   if (error) {
     console.error('Error fetching categories:', error);
+    return <div className="text-red-600">カテゴリーの取得に失敗しました: {error.message}</div>;
   }
 
   return (

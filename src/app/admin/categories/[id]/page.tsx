@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import CategoryForm from '@/app/_components/CategoryForm';
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { use } from 'react';
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 import type { Category } from '../../../_types/Types';
 
 interface Props {
@@ -27,6 +27,11 @@ export default function CategoryEditPage({ params }: Props) {
       cache: 'no-store',
     });
 
+    // 404の場合はnullを返す（エラーとして扱わない）
+    if (res.status === 404) {
+      return null;
+    }
+
     if (!res.ok) {
       throw new Error('Failed to fetch category');
     }
@@ -42,7 +47,6 @@ export default function CategoryEditPage({ params }: Props) {
 
   const handleUpdate = async (name: string) => {
     if (!token) return;
-    const { id } = await params;
     const res = await fetch(`/api/admin/categories/${id}`, {
       method: 'PUT',
       headers: {
@@ -54,6 +58,10 @@ export default function CategoryEditPage({ params }: Props) {
 
     if (res.ok) {
       alert('カテゴリーを更新しました');
+      // 現在のページのSWRキャッシュを再検証
+      await mutate([`/api/admin/categories/${id}`, token]);
+      // 一覧ページのSWRキャッシュを再検証
+      await mutate(['/api/admin/categories', token]);
       router.push('/admin/categories');
     } else {
       alert('更新に失敗しました');
@@ -62,7 +70,6 @@ export default function CategoryEditPage({ params }: Props) {
 
   const handleDelete = async () => {
     if (!token) return;
-    const { id } = await params;
     const res = await fetch(`/api/admin/categories/${id}`, {
       headers: {
         'Content-Type': 'application/json',
@@ -73,6 +80,10 @@ export default function CategoryEditPage({ params }: Props) {
 
     if (res.ok) {
       alert('カテゴリーを削除しました');
+      // 現在のページのSWRキャッシュをクリア（再検証しない）
+      await mutate([`/api/admin/categories/${id}`, token], undefined, { revalidate: false });
+      // 一覧ページのSWRキャッシュを再検証
+      await mutate(['/api/admin/categories', token]);
       router.push('/admin/categories');
     } else {
       alert('削除に失敗しました');
@@ -83,12 +94,12 @@ export default function CategoryEditPage({ params }: Props) {
     return <div>読み込み中...</div>;
   }
 
-  if (error) {
-    return <div>エラーが発生しました: {error.message}</div>;
-  }
-
   if (!category) {
     return <div>カテゴリーが見つかりませんでした</div>;
+  }
+
+  if (error) {
+    return <div>エラーが発生しました: {error.message}</div>;
   }
 
   return (

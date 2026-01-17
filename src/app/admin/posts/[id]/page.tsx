@@ -1,7 +1,7 @@
 "use client";
 import { use } from 'react';
 import { useRouter } from 'next/navigation';
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 import PostForm, { type PostFormData } from '@/app/_components/PostForm';
 import type { Post } from "../../../_types/Types";
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
@@ -25,6 +25,11 @@ export default function PostEditPage({ params }: Props) {
       },
       cache: 'no-store',
     });
+
+    // 404の場合はnullを返す（エラーとして扱わない）
+    if (res.status === 404) {
+      return null;
+    }
 
     if (!res.ok) {
       throw new Error('Failed to fetch post');
@@ -52,6 +57,10 @@ export default function PostEditPage({ params }: Props) {
 
     if (res.ok) {
       alert('記事を更新しました');
+      // 現在のページのSWRキャッシュを再検証
+      await mutate([`/api/admin/posts/${id}`, token]);
+      // 一覧ページのSWRキャッシュを再検証
+      await mutate(['/api/admin/posts', token]);
       router.push('/admin');
     } else {
       alert('更新に失敗しました');
@@ -70,6 +79,10 @@ export default function PostEditPage({ params }: Props) {
 
     if (res.ok) {
       alert('記事を削除しました');
+      // 現在のページのSWRキャッシュをクリア（再検証しない）
+      await mutate([`/api/admin/posts/${id}`, token], undefined, { revalidate: false });
+      // 一覧ページのSWRキャッシュを再検証
+      await mutate(['/api/admin/posts', token]);
       router.push('/admin');
     } else {
       alert('削除に失敗しました');
@@ -80,13 +93,13 @@ export default function PostEditPage({ params }: Props) {
     return <div>読み込み中...</div>;
   }
 
+  if (!post) {
+    return <div>記事が見つかりませんでした</div>;
+  }
+
   if (error) {
     console.error('Failed to fetch post:', error);
     return <div>記事の読み込みに失敗しました</div>;
-  }
-
-  if (!post) {
-    return <div>記事が見つかりませんでした</div>;
   }
 
   return (
