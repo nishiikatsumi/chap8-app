@@ -1,10 +1,10 @@
 "use client";
 import { use } from 'react';
 import { useRouter } from 'next/navigation';
-import useSWR, { mutate } from 'swr';
 import PostForm, { type PostFormData } from '@/app/_components/PostForm';
 import type { Post } from "../../../_types/Types";
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
+import { useFetch } from '@/app/_hooks/useFetch';
 
 interface Props {
   params: Promise<{
@@ -17,32 +17,15 @@ export default function PostEditPage({ params }: Props) {
   const { token } = useSupabaseSession();
   const { id } = use(params);
 
-  const fetcher = async (url: string, token: string) => {
-    const res = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        "Authorization": token,
-      },
-      cache: 'no-store',
-    });
-
-    // 404の場合はnullを返す（エラーとして扱わない）
-    if (res.status === 404) {
-      return null;
-    }
-
-    if (!res.ok) {
-      throw new Error('Failed to fetch post');
-    }
-
-    const data = await res.json();
-    return data.post;
-  };
-
-  const { data: post, error, isLoading } = useSWR<Post>(
-    token ? [`/api/admin/posts/${id}`, token] : null,
-    ([url, token]: [string, string]) => fetcher(url, token)
+  // 投稿詳細と一覧のmutateを取得
+  const { data: postData, error, isLoading, mutate: mutatePost } = useFetch<{ post: Post }>(
+    `/api/admin/posts/${id}`
   );
+  const { mutate: mutatePosts } = useFetch<{ posts: Post[] }>(
+    '/api/admin/posts'
+  );
+
+  const post = postData?.post;
 
   const handleUpdate = async (data: PostFormData) => {
     if (!token) return;
@@ -58,9 +41,9 @@ export default function PostEditPage({ params }: Props) {
     if (res.ok) {
       alert('記事を更新しました');
       // 現在のページのSWRキャッシュを再検証
-      await mutate([`/api/admin/posts/${id}`, token]);
+      await mutatePost();
       // 一覧ページのSWRキャッシュを再検証
-      await mutate(['/api/admin/posts', token]);
+      await mutatePosts();
       router.push('/admin');
     } else {
       alert('更新に失敗しました');
@@ -79,10 +62,8 @@ export default function PostEditPage({ params }: Props) {
 
     if (res.ok) {
       alert('記事を削除しました');
-      // 現在のページのSWRキャッシュをクリア（再検証しない）
-      await mutate([`/api/admin/posts/${id}`, token], undefined, { revalidate: false });
       // 一覧ページのSWRキャッシュを再検証
-      await mutate(['/api/admin/posts', token]);
+      await mutatePosts();
       router.push('/admin');
     } else {
       alert('削除に失敗しました');
@@ -106,11 +87,11 @@ export default function PostEditPage({ params }: Props) {
     <>
       <h1 className="text-3xl font-bold text-[#1f2328]">記事編集</h1>
       <PostForm
-        initialData={{
+        defaultValues={{
           title: post.title,
           content: post.content,
           thumbnailImageKey: post.thumbnailImageKey,
-          selectedCategoryIds: post.postCategories.map((pc) => pc.category.id),
+          categories: post.postCategories.map((pc) => ({ id: pc.category.id })),
         }}
         onSubmit={handleUpdate}
         onDelete={handleDelete}

@@ -1,40 +1,25 @@
 "use client";
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getDateString } from './_utils/getDateString';
 import DOMPurify from 'isomorphic-dompurify';
 import type { Post } from './_types/Types';
+import { usePublicFetch } from './_hooks/useFetch';
 
 export default function Home() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
+  // usePublicFetchで投稿一覧を取得（認証不要）
+  const { data: postsData, isLoading, error } = usePublicFetch<{ posts: Post[] }>('/api/posts');
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const res = await fetch('/api/posts', {
-          cache: "no-cache"
-        });
+  const posts = postsData?.posts;
 
-        if (res.ok) {
-          const data = await res.json();
-          setPosts(data.posts);
-        }
-      } catch {
-        setPosts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPosts();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return <div>読み込み中...</div>;
   }
 
-  if (posts.length === 0) {
+  if (error) {
+    return <div>記事の読み込みに失敗しました</div>;
+  }
+
+  if (!posts || posts.length === 0) {
     return <div>記事がまだありません</div>;
   }
 

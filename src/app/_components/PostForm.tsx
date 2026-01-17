@@ -1,9 +1,11 @@
 "use client";
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, ChangeEvent } from 'react';
 import { supabase } from '@/app/_libs/supabase'
 import { v4 as uuidv4 } from 'uuid'  // 固有IDを生成するライブラリ
 import Image from 'next/image'
-import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession'
+import { useForm } from 'react-hook-form';
+import useSWR from 'swr';
+import { useFetch } from '@/app/_hooks/useFetch';
 
 interface Category {
   id: number;
@@ -18,100 +20,73 @@ export interface PostFormData {
 }
 
 interface PostFormProps {
-  initialData?: {
-    title: string;
-    content: string;
-    thumbnailImageKey: string;
-    selectedCategoryIds: number[];
-  };
+  defaultValues?: Partial<PostFormData>;
   onSubmit: (data: PostFormData) => Promise<void>;
   onDelete?: () => Promise<void>;
   submitLabel: string;
 }
 
+// サムネイル画像URL取得用のfetcher関数
+const thumbnailFetcher = async (key: string) => {
+  const {
+    data: { publicUrl },
+  } = await supabase.storage
+    .from('post_thumbnail')
+    .getPublicUrl(key);
+
+  return publicUrl;
+};
+
 export default function PostForm({
-  initialData = {
-    title: '',
-    content: '',
-    thumbnailImageKey: '',
-    selectedCategoryIds: [],
-  },
+  defaultValues,
   onSubmit,
   onDelete,
-  submitLabel,
+  submitLabel
 }: PostFormProps) {
-  const { token, isLoading: isTokenLoading } = useSupabaseSession();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm<PostFormData>({
+    defaultValues: {
+      title: defaultValues?.title || '',
+      content: defaultValues?.content || '',
+      thumbnailImageKey: defaultValues?.thumbnailImageKey || '',
+      categories: defaultValues?.categories || [],
+    }
+  });
+
   const [submitting, setSubmitting] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState(initialData.title);
-  const [content, setContent] = useState(initialData.content);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>(
-    initialData.selectedCategoryIds
+    defaultValues?.categories?.map(cat => cat.id) || []
   );
-  const [thumbnailImageKey, setThumbnailImageKey] = useState<string>(initialData.thumbnailImageKey);
-  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(
-    null,
-  );  
 
-  useEffect(() => {
-    if (!thumbnailImageKey) return
+  const thumbnailImageKey = watch('thumbnailImageKey');
 
-    // アップロード時に取得した、thumbnailImageKeyを用いて画像のURLを取得
-    const fetcher = async () => {
-      const {
-        data: { publicUrl },
-      } = await supabase.storage
-        .from('post_thumbnail')
-        .getPublicUrl(thumbnailImageKey)
+  // useFetchでカテゴリーを取得
+  const { data: categoriesData, isLoading: isCategoriesLoading } = useFetch<{ categories: Category[] }>(
+    '/api/admin/categories'
+  );
 
-      setThumbnailImageUrl(publicUrl)
-    }
+  const categories = categoriesData?.categories;
 
-    fetcher()
-  }, [thumbnailImageKey])
+  // SWRでサムネイル画像URLを取得
+  const { data: thumbnailImageUrl } = useSWR(
+    thumbnailImageKey ? thumbnailImageKey : null,
+    thumbnailFetcher
+  );
 
-  useEffect(() => {
-    if (isTokenLoading) return;
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': token,
-          },
-          cache: 'no-store',
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setCategories(data.categories);
-        }
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, [token, isTokenLoading]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFormSubmit = async (data: PostFormData) => {
     setSubmitting(true);
 
     try {
       await onSubmit({
-        title,
-        content,
-        thumbnailImageKey: thumbnailImageKey || '',
-        categories: selectedCategoryIds.map((id) => ({ id })),
+        title: data.title,
+        content: data.content,
+        thumbnailImageKey: data.thumbnailImageKey,
+        categories: selectedCategoryIds.map(id => ({ id })),
       });
     } finally {
       setSubmitting(false);
@@ -150,7 +125,7 @@ export default function PostForm({
 
     // Supabaseに画像をアップロード
     const { data, error } = await supabase.storage
-      .from('post_thumbnail')　// ここでバケット名を指定
+      .from('post_thumbnail') // ここでバケット名を指定
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false,
@@ -163,7 +138,7 @@ export default function PostForm({
     }
 
     // data.pathに、画像固有のkeyが入っているので、thumbnailImageKeyに格納する
-    setThumbnailImageKey(data.path)
+    setValue('thumbnailImageKey', data.path)
   };
 
   const handleCategoryToggle = (categoryId: number) => {
@@ -178,12 +153,12 @@ export default function PostForm({
     });
   };
 
-  if (loading || isTokenLoading) {
+  if (isCategoriesLoading) {
     return <div>読み込み中...</div>;
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-6xl">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="max-w-6xl">
       <div className="mb-8">
         <label htmlFor="title" className="block text-base font-semibold text-[#1f2328] mb-2">
           タイトル
@@ -191,12 +166,13 @@ export default function PostForm({
         <input
           type="text"
           id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          {...register('title', { required: 'タイトルは必須です' })}
           className="w-full px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 focus:border-blue-600"
-          required
           disabled={submitting}
         />
+        {errors.title && (
+          <p className="text-red-600 text-sm mt-1">{errors.title.message}</p>
+        )}
       </div>
 
       <div className="mb-8">
@@ -205,12 +181,13 @@ export default function PostForm({
         </label>
         <textarea
           id="content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
+          {...register('content', { required: '内容は必須です' })}
           className="w-full min-h-[200px] px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 resize-y font-inherit focus:border-blue-600"
-          required
           disabled={submitting}
         />
+        {errors.content && (
+          <p className="text-red-600 text-sm mt-1">{errors.content.message}</p>
+        )}
       </div>
 
       <div className="mb-8">
@@ -264,7 +241,7 @@ export default function PostForm({
           カテゴリー
         </label>
         <div className="border border-[#d0d7de] rounded-md p-4 bg-white">
-          {categories.length === 0 ? (
+          {!categories || categories.length === 0 ? (
             <div className="text-gray-500">カテゴリーがありません</div>
           ) : (
             <div className="space-y-2">

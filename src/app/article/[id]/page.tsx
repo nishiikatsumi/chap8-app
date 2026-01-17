@@ -1,10 +1,12 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { use } from 'react';
 import { getDateString } from '../../_utils/getDateString';
 import DOMPurify from 'isomorphic-dompurify';
 import type { Post } from '../../_types/Types';
 import Image from 'next/image';
 import { supabase } from '@/app/_libs/supabase';
+import useSWR from 'swr';
+import { usePublicFetch } from '@/app/_hooks/useFetch';
 
 interface Props {
   params: Promise<{
@@ -12,46 +14,36 @@ interface Props {
   }>;
 }
 
+// サムネイル画像URL取得用のfetcher関数
+const thumbnailFetcher = async (key: string) => {
+  const { data: urlData } = supabase.storage
+    .from('post_thumbnail')
+    .getPublicUrl(key);
+  return urlData.publicUrl;
+};
 
 export default function Article(props: Props) {
-  const [post, setPost] = useState<Post | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
+  const { id } = use(props.params);
 
-  useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const { id } = await props.params;
-        const res = await fetch(`/api/posts/${id}`, {
-          cache: "no-cache"
-        });
+  // usePublicFetchで投稿データを取得（認証不要）
+  const { data: postData, isLoading: isPostLoading, error } = usePublicFetch<{ post: Post }>(
+    `/api/posts/${id}`
+  );
 
-        if (res.ok) {
-          const data = await res.json();
-          setPost(data.post);
+  const post = postData?.post;
 
-          // thumbnailImageKeyからpublicUrlを取得
-          if (data.post.thumbnailImageKey) {
-            const { data: urlData } = supabase.storage
-              .from('post_thumbnail')
-              .getPublicUrl(data.post.thumbnailImageKey);
-            setThumbnailUrl(urlData.publicUrl);
-          }
-        } else {
-          setPost(null);
-        }
-      } catch {
-        setPost(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // SWRでサムネイル画像URLを取得
+  const { data: thumbnailUrl } = useSWR(
+    post?.thumbnailImageKey ? post.thumbnailImageKey : null,
+    thumbnailFetcher
+  );
 
-    fetchPost();
-  }, [props.params]);
-
-  if (loading) {
+  if (isPostLoading) {
     return <div>読み込み中...</div>;
+  }
+
+  if (error) {
+    return <div>記事の読み込みに失敗しました</div>;
   }
 
   if (post == null) {

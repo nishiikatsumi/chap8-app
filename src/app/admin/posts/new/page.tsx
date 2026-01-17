@@ -1,12 +1,18 @@
 "use client";
 import { useRouter } from 'next/navigation';
-import { mutate } from 'swr';
 import PostForm, { type PostFormData } from '@/app/_components/PostForm';
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
+import { useFetch } from '@/app/_hooks/useFetch';
+import type { Post } from "../../../_types/Types";
 
 export default function PostNewPage() {
   const router = useRouter();
   const { token } = useSupabaseSession();
+
+  // 一覧のmutateを取得
+  const { mutate: mutatePosts } = useFetch<{ posts: Post[] }>(
+    '/api/admin/posts'
+  );
 
   const handleSubmit = async (data: PostFormData) => {
     if (!token) return;
@@ -22,7 +28,7 @@ export default function PostNewPage() {
     if (res.ok) {
       alert('記事を作成しました');
       // SWRのキャッシュを再検証
-      await mutate(['/api/admin/posts', token]);
+      await mutatePosts();
       router.push('/admin');
     } else {
       alert('作成に失敗しました');

@@ -1,12 +1,22 @@
 "use client";
 import { useRouter } from 'next/navigation';
-import { mutate } from 'swr';
 import CategoryForm from '@/app/_components/CategoryForm';
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
+import { useFetch } from '@/app/_hooks/useFetch';
+
+interface Category {
+  id: number;
+  name: string;
+}
 
 export default function CategoryNewPage() {
   const router = useRouter();
   const { token } = useSupabaseSession();
+
+  // 一覧のmutateを取得
+  const { mutate: mutateCategories } = useFetch<{ categories: Category[] }>(
+    '/api/admin/categories'
+  );
 
   const handleSubmit = async (name: string) => {
     if (!token) return;
@@ -22,7 +32,7 @@ export default function CategoryNewPage() {
     if (res.ok) {
       alert('カテゴリーを作成しました');
       // SWRのキャッシュを再検証
-      await mutate(['/api/admin/categories', token]);
+      await mutateCategories();
       router.push('/admin/categories');
     } else {
       alert('作成に失敗しました');

@@ -4,8 +4,7 @@ import { useRouter } from 'next/navigation';
 import CategoryForm from '@/app/_components/CategoryForm';
 import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { use } from 'react';
-import useSWR, { mutate } from 'swr';
-import type { Category } from '../../../_types/Types';
+import { useFetch } from '@/app/_hooks/useFetch';
 
 interface Props {
   params: Promise<{
@@ -13,36 +12,22 @@ interface Props {
   }>;
 }
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 export default function CategoryEditPage({ params }: Props) {
   const router = useRouter();
   const { token } = useSupabaseSession();
-  const { id } = use(params)
+  const { id } = use(params);
 
-  const fetcher = async (url: string, token: string) => {
-    const res = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        "Authorization": token,
-      },
-      cache: 'no-store',
-    });
-
-    // 404の場合はnullを返す（エラーとして扱わない）
-    if (res.status === 404) {
-      return null;
-    }
-
-    if (!res.ok) {
-      throw new Error('Failed to fetch category');
-    }
-
-    const data = await res.json();
-    return data.category;
-  }
-
-  const { data: category, error, isLoading} = useSWR<Category>(
-    token ? [`/api/admin/categories/${id}`, token] : null,
-    ([url, token]: [string, string]) => fetcher(url, token)
+  // カテゴリー詳細と一覧のmutateを取得
+  const { mutate: mutateCategory } = useFetch<{ category: Category }>(
+    `/api/admin/categories/${id}`
+  );
+  const { mutate: mutateCategories } = useFetch<{ categories: Category[] }>(
+    '/api/admin/categories'
   );
 
   const handleUpdate = async (name: string) => {
@@ -59,9 +44,9 @@ export default function CategoryEditPage({ params }: Props) {
     if (res.ok) {
       alert('カテゴリーを更新しました');
       // 現在のページのSWRキャッシュを再検証
-      await mutate([`/api/admin/categories/${id}`, token]);
+      await mutateCategory();
       // 一覧ページのSWRキャッシュを再検証
-      await mutate(['/api/admin/categories', token]);
+      await mutateCategories();
       router.push('/admin/categories');
     } else {
       alert('更新に失敗しました');
@@ -80,33 +65,19 @@ export default function CategoryEditPage({ params }: Props) {
 
     if (res.ok) {
       alert('カテゴリーを削除しました');
-      // 現在のページのSWRキャッシュをクリア（再検証しない）
-      await mutate([`/api/admin/categories/${id}`, token], undefined, { revalidate: false });
       // 一覧ページのSWRキャッシュを再検証
-      await mutate(['/api/admin/categories', token]);
+      await mutateCategories();
       router.push('/admin/categories');
     } else {
       alert('削除に失敗しました');
     }
   };
 
-  if (isLoading) {
-    return <div>読み込み中...</div>;
-  }
-
-  if (!category) {
-    return <div>カテゴリーが見つかりませんでした</div>;
-  }
-
-  if (error) {
-    return <div>エラーが発生しました: {error.message}</div>;
-  }
-
   return (
     <>
       <h1 className="text-3xl font-bold text-[#1f2328]">カテゴリー編集</h1>
       <CategoryForm
-        initialName={category.name}
+        categoryId={id}
         onSubmit={handleUpdate}
         onDelete={handleDelete}
         submitLabel="更新"
