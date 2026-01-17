@@ -1,16 +1,14 @@
 "use client";
 import { useRouter } from 'next/navigation';
 import PostForm, { type PostFormData } from '@/app/_components/PostForm';
-import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { useFetch } from '@/app/_hooks/useFetch';
 import type { Post } from "../../../_types/Types";
 
 export default function PostNewPage() {
   const router = useRouter();
-  const { token } = useSupabaseSession();
 
-  // 一覧のmutateを取得
-  const { mutate: mutatePosts } = useFetch<{ posts: Post[] }>(
+  // 一覧のmutateとtokenを取得
+  const { mutate: mutatePosts, token } = useFetch<{ posts: Post[] }>(
     '/api/admin/posts'
   );
 

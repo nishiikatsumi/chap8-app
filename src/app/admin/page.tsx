@@ -2,14 +2,11 @@
 
 import Link from "next/link";
 import { getDateString } from "../_utils/getDateString";
-import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import { useFetch } from "@/app/_hooks/useFetch";
 import type { Post } from "../_types/Types";
 
 export default function AdminPage() {
-  const { token } = useSupabaseSession();
-
-  const { data: postsData, error, isLoading: isLoadingPosts } = useFetch<{ posts: Post[] }>(
+  const { data: postsData, error, isLoading: isLoadingPosts, token } = useFetch<{ posts: Post[] }>(
     '/api/admin/posts'
   );
 

@@ -52,6 +52,7 @@ export function useFetch<T>(endpoint: string | null, requireAuth: boolean = true
     error,
     isLoading: requireAuth ? isLoading || isTokenLoading : isLoading,
     mutate,
+    token: requireAuth ? token : null,
   };
 }
 

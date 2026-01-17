@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { getDateString } from "../../_utils/getDateString";
-import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import { useFetch } from "@/app/_hooks/useFetch";
 
 interface Category {
@@ -13,9 +12,7 @@ interface Category {
 }
 
 export default function CategoriesPage() {
-  const { token } = useSupabaseSession();
-
-  const { data: categoriesData, error, isLoading: isLoadingCategories } = useFetch<{ categories: Category[] }>(
+  const { data: categoriesData, error, isLoading: isLoadingCategories, token } = useFetch<{ categories: Category[] }>(
     '/api/admin/categories'
   );
 

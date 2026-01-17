@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import CategoryForm from '@/app/_components/CategoryForm';
-import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { use } from 'react';
 import { useFetch } from '@/app/_hooks/useFetch';
 
@@ -19,11 +18,10 @@ interface Category {
 
 export default function CategoryEditPage({ params }: Props) {
   const router = useRouter();
-  const { token } = useSupabaseSession();
   const { id } = use(params);
 
-  // カテゴリー詳細と一覧のmutateを取得
-  const { mutate: mutateCategory } = useFetch<{ category: Category }>(
+  // カテゴリー詳細と一覧のmutateとtokenを取得
+  const { mutate: mutateCategory, token } = useFetch<{ category: Category }>(
     `/api/admin/categories/${id}`
   );
   const { mutate: mutateCategories } = useFetch<{ categories: Category[] }>(

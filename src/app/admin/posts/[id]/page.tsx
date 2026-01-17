@@ -3,7 +3,6 @@ import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import PostForm, { type PostFormData } from '@/app/_components/PostForm';
 import type { Post } from "../../../_types/Types";
-import { useSupabaseSession } from '@/app/_hooks/useSupabaseSession';
 import { useFetch } from '@/app/_hooks/useFetch';
 
 interface Props {
@@ -14,11 +13,10 @@ interface Props {
 
 export default function PostEditPage({ params }: Props) {
   const router = useRouter();
-  const { token } = useSupabaseSession();
   const { id } = use(params);
 
-  // 投稿詳細と一覧のmutateを取得
-  const { data: postData, error, isLoading, mutate: mutatePost } = useFetch<{ post: Post }>(
+  // 投稿詳細と一覧のmutateとtokenを取得
+  const { data: postData, error, isLoading, mutate: mutatePost, token } = useFetch<{ post: Post }>(
     `/api/admin/posts/${id}`
   );
   const { mutate: mutatePosts } = useFetch<{ posts: Post[] }>(
