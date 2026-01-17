@@ -1,21 +1,32 @@
 "use client";
 import { useRouter } from 'next/navigation';
 import PostForm, { type PostFormData } from '@/app/_components/PostForm';
+import { useFetch } from '@/app/_hooks/useFetch';
+import type { Post } from "../../../_types/Types";
 
 export default function PostNewPage() {
   const router = useRouter();
 
+  // 一覧のmutateとtokenを取得
+  const { mutate: mutatePosts, token } = useFetch<{ posts: Post[] }>(
+    '/api/admin/posts'
+  );
+
   const handleSubmit = async (data: PostFormData) => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts`, {
+    if (!token) return;
+    const res = await fetch(`/api/admin/posts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        "Authorization": token,
       },
       body: JSON.stringify(data),
     });
 
     if (res.ok) {
       alert('記事を作成しました');
+      // SWRのキャッシュを再検証
+      await mutatePosts();
       router.push('/admin');
     } else {
       alert('作成に失敗しました');

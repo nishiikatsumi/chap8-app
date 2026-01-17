@@ -1,9 +1,12 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { use } from 'react';
 import { getDateString } from '../../_utils/getDateString';
 import DOMPurify from 'isomorphic-dompurify';
 import type { Post } from '../../_types/Types';
 import Image from 'next/image';
+import { supabase } from '@/app/_libs/supabase';
+import useSWR from 'swr';
+import { usePublicFetch } from '@/app/_hooks/useFetch';
 
 interface Props {
   params: Promise<{
@@ -11,37 +14,36 @@ interface Props {
   }>;
 }
 
+// サムネイル画像URL取得用のfetcher関数
+const thumbnailFetcher = async (key: string) => {
+  const { data: urlData } = supabase.storage
+    .from('post_thumbnail')
+    .getPublicUrl(key);
+  return urlData.publicUrl;
+};
 
 export default function Article(props: Props) {
-  const [post, setPost] = useState<Post | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { id } = use(props.params);
 
-  useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const { id } = await props.params;
-        const res = await fetch(`/api/posts/${id}`, {
-          cache: "no-cache"
-        });
+  // usePublicFetchで投稿データを取得（認証不要）
+  const { data: postData, isLoading: isPostLoading, error } = usePublicFetch<{ post: Post }>(
+    `/api/posts/${id}`
+  );
 
-        if (res.ok) {
-          const data = await res.json();
-          setPost(data.post);
-        } else {
-          setPost(null);
-        }
-      } catch {
-        setPost(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const post = postData?.post;
 
-    fetchPost();
-  }, [props.params]);
+  // SWRでサムネイル画像URLを取得
+  const { data: thumbnailUrl } = useSWR(
+    post?.thumbnailImageKey ? post.thumbnailImageKey : null,
+    thumbnailFetcher
+  );
 
-  if (loading) {
+  if (isPostLoading) {
     return <div>読み込み中...</div>;
+  }
+
+  if (error) {
+    return <div>記事の読み込みに失敗しました</div>;
   }
 
   if (post == null) {
@@ -52,15 +54,17 @@ export default function Article(props: Props) {
     <div>
       <main className="max-w-4xl mx-auto py-10 px-5">
         <article key={post.id} className="bg-white border border-gray-200 px-8 py-6 mb-6">
-          <div>
-            <Image
-              height={500}
-              width={800}
-              src={post.thumbnailUrl}
-              alt={`${post.title}の画像`}
-              className="w-full h-auto rounded"
-            />
-          </div>
+          {thumbnailUrl && (
+            <div>
+              <Image
+                height={500}
+                width={800}
+                src={thumbnailUrl}
+                alt={`${post.title}の画像`}
+                className="w-full h-auto rounded"
+              />
+            </div>
+          )}
           <div className="flex justify-between items-center mb-3">
             <span className="text-sm text-gray-500">{getDateString(post.createdAt)}</span>
             <div className="flex gap-2">

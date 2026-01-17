@@ -1,9 +1,21 @@
 
 import { prisma } from '@/app/_libs/prisma'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import { CategoriesIndexResponse } from '../../../_types/PrismaTypes'
+import { supabaseServer } from '@/app/_libs/supabaseServer'
 
-export const GET = async () => {
+export const GET = async (request: NextRequest) => {
+  const token = request.headers.get('Authorization') ?? ''
+  
+    // supabaseに対してtokenを送る
+    const { error } = await supabaseServer.auth.getUser(token)
+  
+    // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+    if (error)
+      return NextResponse.json({ status: error.message }, { status: 400 })
+  
+    // tokenが正しい場合、以降が実行される
+  
   try {
     // カテゴリーの一覧をDBから取得
     const categories = await prisma.category.findMany({
@@ -30,7 +42,18 @@ export type CreateCategoryResponse = {
   id: number
 }
 
-export const POST = async (request: Request) => {
+export const POST = async (request: NextRequest) => {
+  const token = request.headers.get('Authorization') ?? ''
+
+	// supabaseに対してtokenを送る
+  const { error } = await supabaseServer.auth.getUser(token)
+
+  // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+  if (error)
+    return NextResponse.json({ status: error.message }, { status: 400 })
+
+  // tokenが正しい場合、以降が実行される
+
   try {
     // リクエストのbodyを取得
     const body = await request.json()

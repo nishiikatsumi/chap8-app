@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import PostForm, { type PostFormData } from '@/app/_components/PostForm';
 import type { Post } from "../../../_types/Types";
+import { useFetch } from '@/app/_hooks/useFetch';
 
 interface Props {
   params: Promise<{
@@ -12,44 +13,35 @@ interface Props {
 
 export default function PostEditPage({ params }: Props) {
   const router = useRouter();
-  const [post, setPost] = useState<Post | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { id } = use(params);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { id } = await params;
+  // 投稿詳細と一覧のmutateとtokenを取得
+  const { data: postData, error, isLoading, mutate: mutatePost, token } = useFetch<{ post: Post }>(
+    `/api/admin/posts/${id}`
+  );
+  const { mutate: mutatePosts } = useFetch<{ posts: Post[] }>(
+    '/api/admin/posts'
+  );
 
-        const postRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts/${id}`, {
-          cache: 'no-store',
-        });
-
-        if (postRes.ok) {
-          const postData = await postRes.json();
-          setPost(postData.post);
-        }
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [params]);
+  const post = postData?.post;
 
   const handleUpdate = async (data: PostFormData) => {
-    const { id } = await params;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts/${id}`, {
+    if (!token) return;
+    const res = await fetch(`/api/admin/posts/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        "Authorization": token,
       },
       body: JSON.stringify(data),
     });
 
     if (res.ok) {
       alert('記事を更新しました');
+      // 現在のページのSWRキャッシュを再検証
+      await mutatePost();
+      // 一覧ページのSWRキャッシュを再検証
+      await mutatePosts();
       router.push('/admin');
     } else {
       alert('更新に失敗しました');
@@ -57,20 +49,26 @@ export default function PostEditPage({ params }: Props) {
   };
 
   const handleDelete = async () => {
-    const { id } = await params;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts/${id}`, {
+    if (!token) return;
+    const res = await fetch(`/api/admin/posts/${id}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        "Authorization": token,
+      },
       method: 'DELETE',
     });
 
     if (res.ok) {
       alert('記事を削除しました');
+      // 一覧ページのSWRキャッシュを再検証
+      await mutatePosts();
       router.push('/admin');
     } else {
       alert('削除に失敗しました');
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return <div>読み込み中...</div>;
   }
 
@@ -78,15 +76,20 @@ export default function PostEditPage({ params }: Props) {
     return <div>記事が見つかりませんでした</div>;
   }
 
+  if (error) {
+    console.error('Failed to fetch post:', error);
+    return <div>記事の読み込みに失敗しました</div>;
+  }
+
   return (
     <>
       <h1 className="text-3xl font-bold text-[#1f2328]">記事編集</h1>
       <PostForm
-        initialData={{
+        defaultValues={{
           title: post.title,
           content: post.content,
-          thumbnailUrl: post.thumbnailUrl,
-          selectedCategoryIds: post.postCategories.map((pc) => pc.category.id),
+          thumbnailImageKey: post.thumbnailImageKey,
+          categories: post.postCategories.map((pc) => ({ id: pc.category.id })),
         }}
         onSubmit={handleUpdate}
         onDelete={handleDelete}

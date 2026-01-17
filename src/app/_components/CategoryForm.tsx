@@ -1,28 +1,62 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { useFetch } from '@/app/_hooks/useFetch';
+
+interface CategoryFormData {
+  name: string;
+}
 
 interface CategoryFormProps {
-  initialName?: string;
+  categoryId?: string; // 編集時に渡されるカテゴリーID
   onSubmit: (name: string) => Promise<void>;
   onDelete?: () => Promise<void>;
   submitLabel: string;
 }
 
+interface Category {
+  id: number;
+  name: string;
+}
+
 export default function CategoryForm({
-  initialName = '',
+  categoryId,
   onSubmit,
   onDelete,
   submitLabel,
 }: CategoryFormProps) {
   const [submitting, setSubmitting] = useState(false);
-  const [name, setName] = useState(initialName);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // 編集モードの場合のみカテゴリーデータを取得
+  const { data: categoryData, isLoading: isCategoryLoading } = useFetch<{ category: Category }>(
+    categoryId ? `/api/admin/categories/${categoryId}` : null
+  );
+
+  const category = categoryData?.category;
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<CategoryFormData>({
+    defaultValues: {
+      name: '',
+    },
+  });
+
+  // カテゴリーデータがフェッチされたらフォームに反映
+  useEffect(() => {
+    if (category) {
+      reset({ name: category.name });
+    }
+  }, [category, reset]);
+
+  const handleFormSubmit = async (data: CategoryFormData) => {
     setSubmitting(true);
 
     try {
-      await onSubmit(name);
+      await onSubmit(data.name);
     } finally {
       setSubmitting(false);
     }
@@ -44,8 +78,18 @@ export default function CategoryForm({
     }
   };
 
+  // 編集モードでデータ読み込み中の場合
+  if (categoryId && isCategoryLoading) {
+    return <div>読み込み中...</div>;
+  }
+
+  // 編集モードでカテゴリーが見つからない場合
+  if (categoryId && !category && !isCategoryLoading) {
+    return <div>カテゴリーが見つかりませんでした</div>;
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="max-w-6xl">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="max-w-6xl">
       <div className="mb-8">
         <label htmlFor="name" className="block text-base font-semibold text-[#1f2328] mb-2">
           カテゴリー名
@@ -53,12 +97,13 @@ export default function CategoryForm({
         <input
           type="text"
           id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          {...register('name', { required: 'カテゴリー名は必須です' })}
           className="w-full px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 focus:border-blue-600"
-          required
           disabled={submitting}
         />
+        {errors.name && (
+          <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
+        )}
       </div>
 
       <div className="flex gap-4 mt-10">

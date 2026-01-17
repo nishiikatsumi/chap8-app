@@ -1,5 +1,11 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, ChangeEvent } from 'react';
+import { supabase } from '@/app/_libs/supabase'
+import { v4 as uuidv4 } from 'uuid'  // 固有IDを生成するライブラリ
+import Image from 'next/image'
+import { useForm } from 'react-hook-form';
+import useSWR from 'swr';
+import { useFetch } from '@/app/_hooks/useFetch';
 
 interface Category {
   id: number;
@@ -9,74 +15,78 @@ interface Category {
 export interface PostFormData {
   title: string;
   content: string;
-  thumbnailUrl: string;
+  thumbnailImageKey: string;
   categories: { id: number }[];
 }
 
 interface PostFormProps {
-  initialData?: {
-    title: string;
-    content: string;
-    thumbnailUrl: string;
-    selectedCategoryIds: number[];
-  };
+  defaultValues?: Partial<PostFormData>;
   onSubmit: (data: PostFormData) => Promise<void>;
   onDelete?: () => Promise<void>;
   submitLabel: string;
 }
 
+// サムネイル画像URL取得用のfetcher関数
+const thumbnailFetcher = async (key: string) => {
+  const {
+    data: { publicUrl },
+  } = await supabase.storage
+    .from('post_thumbnail')
+    .getPublicUrl(key);
+
+  return publicUrl;
+};
+
 export default function PostForm({
-  initialData = {
-    title: '',
-    content: '',
-    thumbnailUrl: '',
-    selectedCategoryIds: [],
-  },
+  defaultValues,
   onSubmit,
   onDelete,
-  submitLabel,
+  submitLabel
 }: PostFormProps) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm<PostFormData>({
+    defaultValues: {
+      title: defaultValues?.title || '',
+      content: defaultValues?.content || '',
+      thumbnailImageKey: defaultValues?.thumbnailImageKey || '',
+      categories: defaultValues?.categories || [],
+    }
+  });
+
   const [submitting, setSubmitting] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState(initialData.title);
-  const [content, setContent] = useState(initialData.content);
-  const [thumbnailUrl, setThumbnailUrl] = useState(initialData.thumbnailUrl);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>(
-    initialData.selectedCategoryIds
+    defaultValues?.categories?.map(cat => cat.id) || []
   );
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/categories`, {
-          cache: 'no-store',
-        });
+  const thumbnailImageKey = watch('thumbnailImageKey');
 
-        if (res.ok) {
-          const data = await res.json();
-          setCategories(data.categories);
-        }
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // useFetchでカテゴリーを取得
+  const { data: categoriesData, isLoading: isCategoriesLoading } = useFetch<{ categories: Category[] }>(
+    '/api/admin/categories'
+  );
 
-    fetchCategories();
-  }, []);
+  const categories = categoriesData?.categories;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // SWRでサムネイル画像URLを取得
+  const { data: thumbnailImageUrl } = useSWR(
+    thumbnailImageKey ? thumbnailImageKey : null,
+    thumbnailFetcher
+  );
+
+  const handleFormSubmit = async (data: PostFormData) => {
     setSubmitting(true);
 
     try {
       await onSubmit({
-        title,
-        content,
-        thumbnailUrl,
-        categories: selectedCategoryIds.map((id) => ({ id })),
+        title: data.title,
+        content: data.content,
+        thumbnailImageKey: data.thumbnailImageKey,
+        categories: selectedCategoryIds.map(id => ({ id })),
       });
     } finally {
       setSubmitting(false);
@@ -97,6 +107,38 @@ export default function PostForm({
     } finally {
       setSubmitting(false);
     }
+
+
+  };
+
+  const handleImageChange = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ): Promise<void> => {
+    if (!event.target.files || event.target.files.length == 0) {
+      // 画像が選択されていないのでreturn
+      return
+    }
+
+    const file = event.target.files[0] // 選択された画像を取得
+
+    const filePath = `private/${uuidv4()}` // ファイルパスを指定
+
+    // Supabaseに画像をアップロード
+    const { data, error } = await supabase.storage
+      .from('post_thumbnail') // ここでバケット名を指定
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      })
+
+    // アップロードに失敗したらエラーを表示して終了
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    // data.pathに、画像固有のkeyが入っているので、thumbnailImageKeyに格納する
+    setValue('thumbnailImageKey', data.path)
   };
 
   const handleCategoryToggle = (categoryId: number) => {
@@ -111,12 +153,12 @@ export default function PostForm({
     });
   };
 
-  if (loading) {
+  if (isCategoriesLoading) {
     return <div>読み込み中...</div>;
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-6xl">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="max-w-6xl">
       <div className="mb-8">
         <label htmlFor="title" className="block text-base font-semibold text-[#1f2328] mb-2">
           タイトル
@@ -124,12 +166,13 @@ export default function PostForm({
         <input
           type="text"
           id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          {...register('title', { required: 'タイトルは必須です' })}
           className="w-full px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 focus:border-blue-600"
-          required
           disabled={submitting}
         />
+        {errors.title && (
+          <p className="text-red-600 text-sm mt-1">{errors.title.message}</p>
+        )}
       </div>
 
       <div className="mb-8">
@@ -138,35 +181,67 @@ export default function PostForm({
         </label>
         <textarea
           id="content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
+          {...register('content', { required: '内容は必須です' })}
           className="w-full min-h-[200px] px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 resize-y font-inherit focus:border-blue-600"
-          required
           disabled={submitting}
         />
+        {errors.content && (
+          <p className="text-red-600 text-sm mt-1">{errors.content.message}</p>
+        )}
       </div>
 
       <div className="mb-8">
-        <label htmlFor="thumbnailUrl" className="block text-base font-semibold text-[#1f2328] mb-2">
-          サムネイルURL
+        <label
+          htmlFor="thumbnailImageKey"
+          className="block text-base font-semibold text-[#1f2328] mb-2"
+        >
+          サムネイル画像
         </label>
-        <input
-          type="url"
-          id="thumbnailUrl"
-          value={thumbnailUrl}
-          onChange={(e) => setThumbnailUrl(e.target.value)}
-          className="w-full px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 focus:border-blue-600"
-          required
-          disabled={submitting}
-        />
+        {!thumbnailImageUrl ? (
+          <input
+            type="file"
+            id="thumbnailImageKey"
+            onChange={handleImageChange}
+            accept="image/*"
+            disabled={submitting}
+            className="w-full px-4 py-3 text-base border border-[#d0d7de] rounded-md outline-none transition-colors duration-200 focus:border-blue-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+        ) : (
+          <div>
+            <div className="mb-4">
+              <Image
+                src={thumbnailImageUrl}
+                alt="thumbnail"
+                width={400}
+                height={400}
+                className="rounded-md border border-[#d0d7de]"
+              />
+            </div>
+            <label
+              htmlFor="thumbnailImageKey"
+              className="inline-block bg-gray-100 text-gray-700 px-6 py-2 border border-[#d0d7de] rounded-md text-sm font-semibold cursor-pointer transition-colors duration-200 hover:bg-gray-200"
+            >
+              画像を変更
+              <input
+                type="file"
+                id="thumbnailImageKey"
+                onChange={handleImageChange}
+                accept="image/*"
+                disabled={submitting}
+                className="hidden"
+              />
+            </label>
+          </div>
+        )}
       </div>
+
 
       <div className="mb-8">
         <label className="block text-base font-semibold text-[#1f2328] mb-2">
           カテゴリー
         </label>
         <div className="border border-[#d0d7de] rounded-md p-4 bg-white">
-          {categories.length === 0 ? (
+          {!categories || categories.length === 0 ? (
             <div className="text-gray-500">カテゴリーがありません</div>
           ) : (
             <div className="space-y-2">

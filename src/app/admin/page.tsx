@@ -1,21 +1,43 @@
+'use client'
+
 import Link from "next/link";
-import { PostsIndexResponse } from "../_types/PrismaTypes";
 import { getDateString } from "../_utils/getDateString";
+import { useFetch } from "@/app/_hooks/useFetch";
+import type { Post } from "../_types/Types";
 
-async function getPosts(): Promise<PostsIndexResponse> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/posts`, {
-    cache: 'no-store',
-  });
+export default function AdminPage() {
+  const { data: postsData, error, isLoading: isLoadingPosts, token } = useFetch<{ posts: Post[] }>(
+    '/api/admin/posts'
+  );
 
-  if (!res.ok) {
-    throw new Error('Failed to fetch posts');
+  const posts = postsData?.posts;
+
+  if (!token) {
+    return <div className="text-red-600">認証が必要です</div>;
   }
 
-  return res.json();
-}
+  if (isLoadingPosts) {
+    return <div>読み込み中...</div>;
+  }
 
-export default async function AdminPage() {
-  const { posts } = await getPosts();
+  if (error) {
+    console.error('Error fetching posts:', error);
+    return <div className="text-red-600">記事の取得に失敗しました</div>;
+  }
+
+  if (!posts || posts.length === 0) {
+    return (
+      <>
+        <div className="flex justify-between items-center mb-10">
+          <h1 className="text-3xl font-bold text-[#1f2328]">記事一覧</h1>
+          <Link href="/admin/posts/new" className="bg-blue-600 text-white px-6 py-3 border-0 rounded-md text-base font-semibold cursor-pointer no-underline inline-block transition-colors duration-200 hover:bg-blue-700">
+            新規作成
+          </Link>
+        </div>
+        <div>記事がまだありません</div>
+      </>
+    );
+  }
 
   return (
     <>

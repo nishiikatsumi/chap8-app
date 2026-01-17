@@ -1,8 +1,20 @@
 import { prisma } from '@/app/_libs/prisma'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import { PostsIndexResponse } from '../../../_types/PrismaTypes'
+import { supabaseServer } from '@/app/_libs/supabaseServer'
 
-export const GET = async () => {
+export const GET = async (request: NextRequest) => {
+  const token = request.headers.get('Authorization') ?? ''
+
+  // supabaseに対してtokenを送る
+  const { error } = await supabaseServer.auth.getUser(token)
+
+  // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+  if (error)
+    return NextResponse.json({ status: error.message }, { status: 400 })
+
+  // tokenが正しい場合、以降が実行される
+
   try {
     const posts = await prisma.post.findMany({
       include: {
@@ -34,7 +46,7 @@ export type CreatePostRequestBody = {
   title: string
   content: string
   categories: { id: number }[]
-  thumbnailUrl: string
+  thumbnailImageKey: string
 }
 
 // 投稿作成APIのレスポンスの型
@@ -44,19 +56,30 @@ export type CreatePostResponse = {
 
 // POSTという命名にすることで、POSTリクエストの時にこの関数が呼ばれる
 export const POST = async (request: Request) => {
+  const token = request.headers.get('Authorization') ?? ''
+
+	// supabaseに対してtokenを送る
+  const { error } = await supabaseServer.auth.getUser(token)
+
+  // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+  if (error)
+    return NextResponse.json({ status: error.message }, { status: 400 })
+
+  // tokenが正しい場合、以降が実行される
+
   try {
     // リクエストのbodyを取得
     const body: CreatePostRequestBody = await request.json()
 
-    // bodyの中からtitle, content, categories, thumbnailUrlを取り出す
-    const { title, content, categories, thumbnailUrl } = body
+    // bodyの中からtitle, content, categories, thumbnailImageKeyを取り出す
+    const { title, content, categories, thumbnailImageKey } = body
 
     // 投稿をDBに生成
     const data = await prisma.post.create({
       data: {
         title,
         content,
-        thumbnailUrl,
+        thumbnailImageKey,
       },
     })
 
